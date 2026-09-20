@@ -3,7 +3,7 @@
   "bands": 12,
   "mlEnabled": true,
   "fps": 30,
-  "durationSeconds": 15,
+  "durationSeconds": 20,
   "videoUrl": "/artifacts/demo/ritmo-de-luz-menu-loop.mp4",
   "demos": [
     {
@@ -12,7 +12,7 @@
       "audio": "menu-loop.wav",
       "videoUrl": "/artifacts/demo/ritmo-de-luz-menu-loop.mp4",
       "description": "Loop musical CC0 para ritmo y ataques.",
-      "durationSeconds": 15,
+      "durationSeconds": 20,
       "mlEnabled": true
     },
     {
@@ -21,7 +21,7 @@
       "audio": "peaceful-forest.wav",
       "videoUrl": "/artifacts/demo/ritmo-de-luz-peaceful-forest.mp4",
       "description": "Textura ambiental CC0 para suavizado.",
-      "durationSeconds": 15,
+      "durationSeconds": 20,
       "mlEnabled": true
     },
     {
@@ -30,7 +30,7 @@
       "audio": "space-ranger.wav",
       "videoUrl": "/artifacts/demo/ritmo-de-luz-space-ranger.mp4",
       "description": "Loop downtempo CC0 para cambios espectrales.",
-      "durationSeconds": 15,
+      "durationSeconds": 20,
       "mlEnabled": true
     }
   ]
