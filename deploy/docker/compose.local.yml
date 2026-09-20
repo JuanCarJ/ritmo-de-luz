@@ -1,0 +1,14 @@
+services:
+  app:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+    environment:
+      DATA_DIR: /app/runtime
+      EMBEDDED_WORKER: "true"
+      ENABLE_ML: "true"
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ../../runtime:/app/runtime
+

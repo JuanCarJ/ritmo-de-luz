@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ritmo-de-luz.local/contracts/render-job.schema.json",
+  "title": "Ritmo de Luz render job",
+  "type": "object",
+  "required": ["id", "status", "progress"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1},
+    "status": {"enum": ["queued", "running", "completed", "failed"]},
+    "progress": {"type": "integer", "minimum": 0, "maximum": 100},
+    "outputUrl": {"type": ["string", "null"]},
+    "error": {"type": ["string", "null"]},
+    "mlEnabled": {"type": "boolean"}
+  },
+  "additionalProperties": true
+}

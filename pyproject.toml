@@ -1,0 +1,43 @@
+[project]
+name = "ritmo-de-luz"
+version = "0.1.0"
+description = "Visualizacion audiovisual: el sonido se convierte en luz, color y movimiento."
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115,<1",
+  "uvicorn[standard]>=0.30,<1",
+  "python-multipart>=0.0.9,<1",
+  "numpy>=1.26,<3",
+  "pillow>=10,<12",
+  "soundfile>=0.12,<1",
+  "librosa>=0.10,<1",
+  "imageio>=2.34,<3",
+  "imageio-ffmpeg>=0.5,<1",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project.optional-dependencies]
+ml = ["scikit-learn>=1.4,<2"]
+dev = [
+  "pytest>=8,<9",
+  "httpx>=0.27,<1",
+  "ruff>=0.6,<1",
+]
+
+[tool.pytest.ini_options]
+pythonpath = [".", "core"]
+testpaths = ["tests"]
+
+[tool.setuptools]
+package-dir = {"" = "core"}
+
+[tool.setuptools.packages.find]
+where = ["core"]
+include = ["ritmo_de_luz_core*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

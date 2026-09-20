@@ -1,0 +1,31 @@
+services:
+  api:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+    environment:
+      DATA_DIR: /data
+      EMBEDDED_WORKER: "false"
+      ENABLE_ML: "true"
+    expose:
+      - "8000"
+    volumes:
+      - ritmo_data:/data
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+    command: ["python", "-m", "apps.worker.worker", "/data/jobs", "/data/outputs"]
+    environment:
+      DATA_DIR: /data
+      ENABLE_ML: "true"
+    volumes:
+      - ritmo_data:/data
+    restart: unless-stopped
+
+volumes:
+  ritmo_data:
+    name: ritmo-de-luz-data
+

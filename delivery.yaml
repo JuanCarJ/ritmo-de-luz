@@ -1,0 +1,9 @@
+{
+  "schema_version": 2,
+  "project": "ritmo-de-luz",
+  "product_topology": "single-codebase",
+  "repository_layout": "single-repo",
+  "configuration_status": "draft",
+  "production_enabled": false,
+  "activation_blocked_reason": "La demo local debe ser probada y aprobada antes de publicar en servidor_do_1."
+}
