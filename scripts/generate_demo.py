@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import sys
-import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -14,6 +13,7 @@ sys.path.insert(0, str(root / "core"))
 
 samplesDir = root / "samples"
 demoDir = root / "artifacts" / "demo"
+demoAudioDir = demoDir / "audio"
 publicAudios = [
     ("menu-loop", "menu-loop.wav", "Loop musical CC0 para ritmo y ataques."),
     ("peaceful-forest", "peaceful-forest.wav", "Textura ambiental CC0 para suavizado."),
@@ -54,25 +54,26 @@ def main() -> int:
 
     imagePath = ensureImage()
     demoDir.mkdir(parents=True, exist_ok=True)
+    demoAudioDir.mkdir(parents=True, exist_ok=True)
     demos = []
-    with tempfile.TemporaryDirectory(prefix="ritmo-luz-audio-") as tempDir:
-        for audioId, audioName, description in publicAudios:
-            sourcePath = samplesDir / audioName
-            if not sourcePath.exists():
-                raise FileNotFoundError(f"Falta el audio público: {sourcePath}")
-            trimmedPath = Path(tempDir) / f"{audioId}.wav"
-            trimAudio(sourcePath, trimmedPath, seconds=20)
-            outputPath = demoDir / f"ritmo-de-luz-{audioId}.mp4"
-            generateMosaicMp4(image=imagePath, audio=trimmedPath, output=str(outputPath), useMl=True)
-            demos.append({
-                "id": audioId,
-                "name": audioId.replace("-", " ").title(),
-                "audio": audioName,
-                "videoUrl": f"/artifacts/demo/{outputPath.name}",
-                "description": description,
-                "durationSeconds": 20,
-                "mlEnabled": True,
-            })
+    for audioId, audioName, description in publicAudios:
+        sourcePath = samplesDir / audioName
+        if not sourcePath.exists():
+            raise FileNotFoundError(f"Falta el audio público: {sourcePath}")
+        trimmedPath = demoAudioDir / f"{audioId}.wav"
+        trimAudio(sourcePath, trimmedPath, seconds=20)
+        outputPath = demoDir / f"ritmo-de-luz-{audioId}.mp4"
+        generateMosaicMp4(image=imagePath, audio=trimmedPath, output=str(outputPath), useMl=True)
+        demos.append({
+            "id": audioId,
+            "name": audioId.replace("-", " ").title(),
+            "audio": audioName,
+            "audioUrl": f"/artifacts/demo/audio/{trimmedPath.name}",
+            "videoUrl": f"/artifacts/demo/{outputPath.name}",
+            "description": description,
+            "durationSeconds": 20,
+            "mlEnabled": True,
+        })
 
     Image.open(imagePath).resize((960, 540)).save(demoDir / "ritmo-de-luz-demo-poster.jpg", quality=90)
     manifest = {

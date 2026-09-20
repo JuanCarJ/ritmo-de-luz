@@ -21,6 +21,9 @@
         <div class="section-heading"><p class="step">01</p><h2 id="demo-title">Reproduce un video preparado</h2><p>Cada opción combina un audio público CC0 con la imagen del proyecto y un MP4 ya generado. Selecciona una opción y pulsa reproducir.</p></div>
         <label for="demo-selector">Audio de prueba</label>
         <select id="demo-selector" aria-label="Seleccionar audio demo"></select>
+        <label for="demo-image">Imagen para esta prueba</label>
+        <input id="demo-image" type="file" accept="image/png,image/jpeg" />
+        <button id="demo-render" class="button" type="button">Generar con esta imagen</button>
         <video id="demo-video" controls preload="metadata" poster="/artifacts/demo/ritmo-de-luz-demo-poster.jpg">
           <source src="/artifacts/demo/ritmo-de-luz-menu-loop.mp4" type="video/mp4" />
           Tu navegador no puede reproducir este video.
