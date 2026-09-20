@@ -13,7 +13,7 @@ from ritmo_de_luz_core.models import AudioFeatures
 
 def test_audio_features_are_normalized_and_typed():
     samples = [math.sin(2 * math.pi * 440 * i / 8000) for i in range(8000)]
-    result = analyzeAudio(samples, 8000, frame_size=256, hop_size=128, mel_bands=4)
+    result = analyzeAudio(samples, 8000, frameSize=256, hopSize=128, melBands=4)
     assert len(result.rms) == len(result.times) > 1
     assert all(0 <= x <= 1 for x in result.rms)
     assert len(result.mel_bands[0]) == 4
@@ -42,7 +42,7 @@ def test_mosaic_mp4_from_arrays(tmp_path):
     import numpy as np
     image = np.zeros((40, 60, 3), dtype=np.uint8); image[:, :, 0] = 180
     output = tmp_path / "visual.mp4"
-    generateMosaicMp4(image, np.zeros(800), str(output), sample_rate=8000, fps=4, size=(120, 80))
+    generateMosaicMp4(image, np.zeros(800), str(output), sampleRate=8000, fps=4, size=(120, 80))
     assert output.exists() and output.stat().st_size > 0
 
 
@@ -51,4 +51,4 @@ def test_empty_audio_is_rejected(tmp_path):
     pytest.importorskip("numpy")
     import numpy as np
     with pytest.raises(ValueError, match="at least one sample"):
-        generateMosaicMp4(np.zeros((20, 20, 3), dtype=np.uint8), np.array([]), str(tmp_path / "empty.mp4"), sample_rate=8000)
+        generateMosaicMp4(np.zeros((20, 20, 3), dtype=np.uint8), np.array([]), str(tmp_path / "empty.mp4"), sampleRate=8000)

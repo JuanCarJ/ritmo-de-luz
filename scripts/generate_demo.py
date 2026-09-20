@@ -38,7 +38,7 @@ def ensureImage() -> Path:
     return imagePath
 
 
-def trimAudio(sourcePath: Path, targetPath: Path, seconds: int = 15) -> None:
+def trimAudio(sourcePath: Path, targetPath: Path, seconds: int = 20) -> None:
     samples, sampleRate = sf.read(sourcePath, dtype="float32", always_2d=False)
     if samples.ndim > 1:
         samples = samples.mean(axis=1)
@@ -61,16 +61,16 @@ def main() -> int:
             if not sourcePath.exists():
                 raise FileNotFoundError(f"Falta el audio público: {sourcePath}")
             trimmedPath = Path(tempDir) / f"{audioId}.wav"
-            trimAudio(sourcePath, trimmedPath)
+            trimAudio(sourcePath, trimmedPath, seconds=20)
             outputPath = demoDir / f"ritmo-de-luz-{audioId}.mp4"
-            generateMosaicMp4(image=imagePath, audio=trimmedPath, output=str(outputPath))
+            generateMosaicMp4(image=imagePath, audio=trimmedPath, output=str(outputPath), useMl=True)
             demos.append({
                 "id": audioId,
                 "name": audioId.replace("-", " ").title(),
                 "audio": audioName,
                 "videoUrl": f"/artifacts/demo/{outputPath.name}",
                 "description": description,
-                "durationSeconds": 15,
+                "durationSeconds": 20,
                 "mlEnabled": True,
             })
 
@@ -80,7 +80,7 @@ def main() -> int:
         "bands": 12,
         "mlEnabled": True,
         "fps": 30,
-        "durationSeconds": 15,
+        "durationSeconds": 20,
         "videoUrl": demos[0]["videoUrl"],
         "demos": demos,
     }

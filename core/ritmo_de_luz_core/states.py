@@ -5,14 +5,14 @@ from .models import AudioFeatures, Palette, VisualState
 
 
 def clusterStates(audio: AudioFeatures, palette: Palette, *, count: int = 4, seed: int = 7,
-                  use_ml: bool = True) -> tuple[VisualState, ...]:
+                  useMl: bool = True) -> tuple[VisualState, ...]:
     count = max(1, count)
     n = len(audio.rms)
     if not n: return ()
     points = [[audio.rms[i], audio.spectral_centroid[i], audio.onset[i]] for i in range(n)]
     labels = None
     try:
-        if not use_ml:
+        if not useMl:
             raise ImportError
         from sklearn.cluster import KMeans
         labels = KMeans(n_clusters=min(count, n), random_state=seed, n_init=10).fit_predict(points)

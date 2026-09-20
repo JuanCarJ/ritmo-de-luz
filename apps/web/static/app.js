@@ -6,7 +6,7 @@ const demoVideo = document.querySelector('#demo-video');
 function selectDemo(demo) {
   demoVideo.src = demo.videoUrl;
   demoVideo.load();
-  demoMeta.textContent = `Video preparado · ${demo.description || 'Audio público'} · ${demo.durationSeconds || 15} s · ${demo.mlEnabled !== false ? 'ML activado' : 'modo determinista'}`;
+  demoMeta.textContent = `Video preparado · ${demo.description || 'Audio público'} · ${demo.durationSeconds || 20} s · ${demo.mlEnabled !== false ? 'ML activado' : 'modo determinista'}`;
 }
 
 async function loadDemo() {

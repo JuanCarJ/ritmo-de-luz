@@ -29,7 +29,7 @@
       </section>
 
       <section class="panel" aria-labelledby="render-title">
-        <div class="section-heading"><p class="step">02</p><h2 id="render-title">Genera un video nuevo</h2><p>Esta parte sí procesa tus archivos: sube una imagen y un WAV de hasta 40 segundos. La salida será otro MP4.</p></div>
+        <div class="section-heading"><p class="step">02</p><h2 id="render-title">Genera un video nuevo</h2><p>Esta parte sí procesa tus archivos: sube una imagen y un WAV de 20 a 40 segundos. La salida será otro MP4.</p></div>
         <form id="render-form" class="render-form">
           <label>Imagen <input name="image" type="file" accept="image/png,image/jpeg" required /><small>PNG o JPG</small></label>
           <label>Audio <input name="audio" type="file" accept="audio/wav,audio/x-wav" required /><small>WAV · máximo 40 s</small></label>
@@ -41,12 +41,12 @@
       <section class="panel compact" aria-labelledby="method-title">
         <div class="section-heading"><p class="step">03</p><h2 id="method-title">Qué hace el sistema</h2><p>El audio no se muestra aislado: controla el aspecto y el movimiento del video.</p></div>
         <ol class="process">
-          <li><strong>Entrada:</strong> recibe una imagen PNG/JPG y un audio WAV de hasta 40 segundos.</li>
-          <li><strong>Análisis:</strong> divide el audio en ventanas y calcula RMS, centroide, onsets y 12 bandas mel.</li>
-          <li><strong>Normalización:</strong> lleva esas medidas a una escala común para compararlas durante todo el audio.</li>
-          <li><strong>Estados visuales:</strong> K-Means agrupa ventanas parecidas y asigna una paleta; si ML está desactivado usa un fallback reproducible.</li>
-          <li><strong>Composición:</strong> divide la imagen en 24 mosaicos, modula brillo, escala y color, y genera 30 frames por segundo.</li>
-          <li><strong>Salida:</strong> exporta un MP4 y devuelve un enlace para abrirlo.</li>
+          <li><strong>Entrada:</strong> recibe una imagen PNG/JPG y un audio WAV de 20 a 40 segundos.</li>
+          <li><strong>Base — análisis:</strong> divide el audio en ventanas y calcula RMS, centroide, onsets y 12 bandas mel.</li>
+          <li><strong>Base — normalización:</strong> lleva esas medidas a una escala común para compararlas durante todo el audio.</li>
+          <li><strong>Base — composición:</strong> divide la imagen en 24 mosaicos, modula brillo, escala y color, y genera 30 frames por segundo.</li>
+          <li><strong>Base — salida:</strong> exporta un MP4 sincronizado y devuelve un enlace para abrirlo.</li>
+          <li><strong>Extensión opcional — K-Means:</strong> agrupa ventanas acústicas y colores para añadir estados visuales. Se activa con <code>ENABLE_ML=true</code>; si no, se usa el resultado determinista base.</li>
         </ol>
       </section>
     </main>

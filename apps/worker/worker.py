@@ -25,7 +25,7 @@ def process_job(job_dir: Path, output_dir: Path) -> None:
             image=job_dir / "input-image",
             audio=job_dir / "input-audio",
             output=str(output),
-            use_ml=bool(job.get("mlEnabled", True)),
+            useMl=bool(job.get("mlEnabled", False)),
         )
         _write_status(job_file, status="completed", progress=100, outputUrl=f"/runtime/outputs/{output.name}")
     except (OSError, RuntimeError, ValueError) as exc:

@@ -19,8 +19,9 @@ RUNTIME_DIR = Path(os.getenv("DATA_DIR", ROOT / "runtime"))
 JOBS_DIR = RUNTIME_DIR / "jobs"
 OUTPUTS_DIR = RUNTIME_DIR / "outputs"
 MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_BYTES", "25000000"))
+MIN_AUDIO_SECONDS = int(os.getenv("MIN_AUDIO_SECONDS", "20"))
 MAX_AUDIO_SECONDS = int(os.getenv("MAX_AUDIO_SECONDS", "40"))
-ENABLE_ML = os.getenv("ENABLE_ML", "true").lower() == "true"
+ENABLE_ML = os.getenv("ENABLE_ML", "false").lower() == "true"
 EMBEDDED_WORKER = os.getenv("EMBEDDED_WORKER", "true").lower() == "true"
 
 for directory in (JOBS_DIR, OUTPUTS_DIR):
@@ -78,8 +79,8 @@ def _validateAudioDuration(audioPath: Path) -> None:
             duration = audioFile.getnframes() / max(1, audioFile.getframerate())
     except (EOFError, wave.Error) as exc:
         raise HTTPException(status_code=415, detail="El audio debe ser un WAV válido.") from exc
-    if duration > MAX_AUDIO_SECONDS:
-        raise HTTPException(status_code=413, detail=f"El audio no puede superar {MAX_AUDIO_SECONDS} segundos.")
+    if duration < MIN_AUDIO_SECONDS or duration > MAX_AUDIO_SECONDS:
+        raise HTTPException(status_code=413, detail=f"El audio debe durar entre {MIN_AUDIO_SECONDS} y {MAX_AUDIO_SECONDS} segundos.")
 
 
 @app.post("/api/render", status_code=202)

@@ -13,10 +13,10 @@ from .palette import extractPalette
 from .states import clusterStates
 
 
-def analyze(samples: Sequence[float], sample_rate: int, pixels: Iterable[Sequence[int]] = ()) -> AnalysisResult:
-    audio = analyzeAudio(samples, sample_rate)
-    palette = extractPalette(pixels)
-    states = clusterStates(audio, palette)
+def analyze(samples: Sequence[float], sampleRate: int, pixels: Iterable[Sequence[int]] = (), *, useMl: bool = False) -> AnalysisResult:
+    audio = analyzeAudio(samples, sampleRate)
+    palette = extractPalette(pixels, useMl=useMl)
+    states = clusterStates(audio, palette, useMl=useMl)
     frames = tuple(VisualFrame(i, audio.times[i], states[i % len(states)].name,
                                states[i % len(states)].intensity, states[i % len(states)].color)
                    for i in range(len(audio.times))) if states else ()
@@ -66,9 +66,9 @@ def buildMosaicFrame(image, *, mel: Sequence[float] = (), intensity: float = 1.0
     return canvas
 
 
-def generateMosaicMp4(image, audio, output: str, *, sample_rate: int | None = None,
+def generateMosaicMp4(image, audio, output: str, *, sampleRate: int | None = None,
                       fps: int = 30, size=(960, 540), rows: int = 4, columns: int = 6,
-                      use_ml: bool = True) -> str:
+                      useMl: bool = False) -> str:
     """Genera un MP4 de mosaicos reactivos desde rutas o arrays de audio e imagen."""
     try:
         import numpy as np
@@ -83,26 +83,26 @@ def generateMosaicMp4(image, audio, output: str, *, sample_rate: int | None = No
             import soundfile as sf
             samples, detected_rate = sf.read(audio_path, dtype="float32")
             samples = np.mean(samples, axis=1) if np.ndim(samples) > 1 else samples
-            sample_rate = sample_rate or int(detected_rate)
+            sampleRate = sampleRate or int(detected_rate)
         except Exception as exc:
             raise RuntimeError("loading audio paths requires soundfile") from exc
     else:
         samples = np.asarray(audio, dtype=float)
-    if not sample_rate:
-        raise ValueError("sample_rate is required when audio is an array")
+    if not sampleRate:
+        raise ValueError("sampleRate is required when audio is an array")
     if samples.size == 0:
         raise ValueError("audio must contain at least one sample")
     try:
         import imageio.v3 as iio
     except Exception as exc:
         raise RuntimeError("mosaic rendering requires imageio, numpy and pillow") from exc
-    features = analyzeAudio(samples, sample_rate, mel_bands=12)
-    palette = extractPalette(source.reshape(-1, 3)[::max(1, source.shape[0] * source.shape[1] // 2000)], use_ml=use_ml)
-    states = clusterStates(features, palette, use_ml=use_ml)
-    duration = max(1, round(len(samples) / sample_rate * fps))
+    features = analyzeAudio(samples, sampleRate, melBands=12)
+    palette = extractPalette(source.reshape(-1, 3)[::max(1, source.shape[0] * source.shape[1] // 2000)], useMl=useMl)
+    states = clusterStates(features, palette, useMl=useMl)
+    duration = max(1, round(len(samples) / sampleRate * fps))
     frames = []
     for idx in range(duration):
-        exactPos = min(len(features.times) - 1, idx / fps * sample_rate / 512)
+        exactPos = min(len(features.times) - 1, idx / fps * sampleRate / 512)
         leftPos = int(exactPos)
         rightPos = min(len(features.times) - 1, leftPos + 1)
         blend = exactPos - leftPos

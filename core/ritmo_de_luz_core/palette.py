@@ -7,12 +7,12 @@ from .models import Palette
 
 
 def extractPalette(pixels: Iterable[Sequence[int]], *, colors: int = 5, seed: int = 7,
-                   use_ml: bool = True) -> Palette:
+                   useMl: bool = True) -> Palette:
     points = [tuple(max(0, min(255, int(c))) for c in p[:3]) for p in pixels]
     if not points or colors <= 0: return Palette((), ())
     colors = min(colors, len(points))
     try:
-        if not use_ml:
+        if not useMl:
             raise ImportError
         from sklearn.cluster import KMeans
         model = KMeans(n_clusters=colors, random_state=seed, n_init=10).fit(points)

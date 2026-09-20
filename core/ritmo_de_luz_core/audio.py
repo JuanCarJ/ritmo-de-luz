@@ -23,33 +23,33 @@ def _smooth(values, window: int):
     return np.convolve(values, kernel, mode="same")
 
 
-def analyzeAudio(samples: Sequence[float], sample_rate: int, *, frame_size: int = 2048,
-                 hop_size: int = 512, mel_bands: int = 12, smoothing: int = 3) -> AudioFeatures:
+def analyzeAudio(samples: Sequence[float], sampleRate: int, *, frameSize: int = 2048,
+                 hopSize: int = 512, melBands: int = 12, smoothing: int = 3) -> AudioFeatures:
     """Extrae RMS, centroide, onsets y energía por bandas mel normalizados."""
     _require_numpy()
-    if sample_rate <= 0 or frame_size <= 0 or hop_size <= 0:
-        raise ValueError("sample_rate, frame_size and hop_size must be positive")
+    if sampleRate <= 0 or frameSize <= 0 or hopSize <= 0:
+        raise ValueError("sampleRate, frameSize and hopSize must be positive")
     signal = np.asarray(samples, dtype=float).reshape(-1)
     if signal.size == 0:
         return AudioFeatures((), (), (), (), ())
-    if signal.size < frame_size:
-        signal = np.pad(signal, (0, frame_size - signal.size))
-    count = 1 + max(0, (signal.size - frame_size) // hop_size)
-    window = np.hanning(frame_size)
-    frames = np.stack([signal[i * hop_size:i * hop_size + frame_size] * window for i in range(count)])
+    if signal.size < frameSize:
+        signal = np.pad(signal, (0, frameSize - signal.size))
+    count = 1 + max(0, (signal.size - frameSize) // hopSize)
+    window = np.hanning(frameSize)
+    frames = np.stack([signal[i * hopSize:i * hopSize + frameSize] * window for i in range(count)])
     magnitudes = np.abs(np.fft.rfft(frames, axis=1))
     power = magnitudes ** 2
     rms = np.sqrt(np.mean(frames ** 2, axis=1))
     rms = _normalize(rms)
-    freqs = np.fft.rfftfreq(frame_size, 1.0 / sample_rate)
+    freqs = np.fft.rfftfreq(frameSize, 1.0 / sampleRate)
     denom = magnitudes.sum(axis=1)
     centroid = np.divide(magnitudes @ freqs, denom, out=np.zeros_like(denom), where=denom > 1e-12)
     centroid = _normalize(centroid)
     flux = np.maximum(0.0, np.diff(power, axis=0, prepend=power[:1])).sum(axis=1)
     onset = _normalize(flux)
-    bands = _mel_filterbank(magnitudes, sample_rate, mel_bands)
+    bands = _mel_filterbank(magnitudes, sampleRate, melBands)
     bands = np.asarray([_normalize(row) for row in bands.T]).T if bands.size else bands
-    return AudioFeatures(tuple(np.arange(count) * hop_size / sample_rate),
+    return AudioFeatures(tuple(np.arange(count) * hopSize / sampleRate),
                          tuple(_smooth(rms, smoothing)), tuple(_smooth(centroid, smoothing)),
                          tuple(_smooth(onset, smoothing)), tuple(tuple(float(x) for x in row) for row in bands))
 
@@ -61,7 +61,7 @@ def _normalize(values):
     return np.zeros_like(values) if hi - lo < 1e-12 else (values - lo) / (hi - lo)
 
 
-def _mel_filterbank(magnitudes, sample_rate: int, count: int):
+def _mel_filterbank(magnitudes, sampleRate: int, count: int):
     if count <= 0: return np.empty((magnitudes.shape[0], 0))
     bins = magnitudes.shape[1]; edges = np.linspace(0, bins - 1, count + 2, dtype=int)
     out = np.zeros((magnitudes.shape[0], count))
