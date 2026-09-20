@@ -26,6 +26,31 @@
         <label for="demo-image">O carga otra imagen</label>
         <input id="demo-image" type="file" accept="image/png,image/jpeg" />
         <button id="demo-render" class="button" type="button">Generar con esta imagen</button>
+        <div id="render-process" class="render-process" hidden aria-live="polite">
+          <p class="process-title">Construcción del resultado</p>
+          <ol>
+            <li data-step="1"><span>1</span><div><strong>Entrada</strong><small>Imagen + audio WAV</small></div></li>
+            <li data-step="2"><span>2</span><div><strong>Análisis base</strong><small>STFT, 12 bandas mel, RMS, centroide y onsets</small></div></li>
+            <li data-step="3"><span>3</span><div><strong>Normalización</strong><small>Escala común y suavizado temporal</small></div></li>
+            <li data-step="4"><span>4</span><div><strong>Mapeo visual</strong><small>4 × 6 mosaicos, brillo, escala y color</small></div></li>
+            <li data-step="5"><span>5</span><div><strong>Salida</strong><small>MP4 a 30 FPS con audio sincronizado</small></div></li>
+          </ol>
+          <p id="render-phase" class="hint">En cola</p>
+        </div>
+        <div class="technical-note">
+          <strong>Extensión opcional</strong>
+          <p>K-Means agrupa estados acústicos y colores después de la ruta base. Se activa con <code>ENABLE_ML=true</code>; el render local nuevo usa la ruta determinista por defecto.</p>
+        </div>
+        <details class="explanation-guide">
+          <summary>Guía breve para explicarlo</summary>
+          <ol>
+            <li>“La imagen aporta el contenido visual y el audio aporta la señal temporal.”</li>
+            <li>“Extraigo 12 bandas mel y medidas de energía, brillo espectral y ataques.”</li>
+            <li>“Normalizo esas medidas y las asigno a una cuadrícula 4 × 6.”</li>
+            <li>“Cada frame cambia según la energía; K-Means es una mejora opcional de agrupación.”</li>
+            <li>“El resultado es un MP4 reproducible a 30 FPS.”</li>
+          </ol>
+        </details>
         <video id="demo-video" controls preload="metadata" poster="/artifacts/demo/ritmo-de-luz-demo-poster.jpg">
           <source src="/artifacts/demo/ritmo-de-luz-menu-loop.mp4" type="video/mp4" />
           Tu navegador no puede reproducir este video.
@@ -41,17 +66,6 @@
           <button class="button" type="submit">Generar MP4</button>
         </form>
         <p id="render-feedback" class="feedback" role="status"></p>
-        <div id="render-process" class="render-process" hidden aria-live="polite">
-          <p class="process-title">Construcción del resultado</p>
-          <ol>
-            <li data-step="1"><span>1</span> Cargar imagen y audio</li>
-            <li data-step="2"><span>2</span> Analizar bandas y energía</li>
-            <li data-step="3"><span>3</span> Definir estados visuales</li>
-            <li data-step="4"><span>4</span> Construir mosaicos</li>
-            <li data-step="5"><span>5</span> Exportar MP4</li>
-          </ol>
-          <p id="render-phase" class="hint">En cola</p>
-        </div>
       </section>
 
       <section class="panel compact" aria-labelledby="method-title">

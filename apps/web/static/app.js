@@ -43,6 +43,7 @@ async function renderWithImage(imageFile, audioUrl) {
     return;
   }
   renderProcess.hidden = false;
+  renderProcess.scrollIntoView({ behavior: 'smooth', block: 'center' });
   await pollJob(payload.id, true);
   demoRender.disabled = false;
 }
@@ -132,6 +133,7 @@ document.querySelector('#render-form').addEventListener('submit', async (event) 
     return;
   }
   renderProcess.hidden = false;
+  renderProcess.scrollIntoView({ behavior: 'smooth', block: 'center' });
   pollJob(payload.id);
 });
 
