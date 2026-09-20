@@ -71,7 +71,6 @@ def generateMosaicMp4(image, audio, output: str, *, sample_rate: int | None = No
                       use_ml: bool = True) -> str:
     """Genera un MP4 de mosaicos reactivos desde rutas o arrays de audio e imagen."""
     try:
-        import imageio.v3 as iio
         import numpy as np
         from PIL import Image
     except Exception as exc:
@@ -93,6 +92,10 @@ def generateMosaicMp4(image, audio, output: str, *, sample_rate: int | None = No
         raise ValueError("sample_rate is required when audio is an array")
     if samples.size == 0:
         raise ValueError("audio must contain at least one sample")
+    try:
+        import imageio.v3 as iio
+    except Exception as exc:
+        raise RuntimeError("mosaic rendering requires imageio, numpy and pillow") from exc
     features = analyzeAudio(samples, sample_rate, mel_bands=12)
     palette = extractPalette(source.reshape(-1, 3)[::max(1, source.shape[0] * source.shape[1] // 2000)], use_ml=use_ml)
     states = clusterStates(features, palette, use_ml=use_ml)
