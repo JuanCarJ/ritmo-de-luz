@@ -1,4 +1,4 @@
-"""Typed, dependency-light data models for the visualisation core."""
+"""Modelos tipados y ligeros para el núcleo audiovisual."""
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any

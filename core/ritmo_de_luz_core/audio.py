@@ -7,7 +7,7 @@ from .models import AudioFeatures
 
 try:
     import numpy as np
-except ImportError:  # pragma: no cover - exercised in minimal installations
+except ImportError:  # pragma: no cover - instalación mínima
     np = None
 
 
