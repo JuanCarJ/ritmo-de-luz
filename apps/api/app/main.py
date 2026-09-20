@@ -101,7 +101,7 @@ async def createRender(
     audioPath = job_dir / "input-audio"
     await _saveUpload(audio, audioPath)
     _validateAudioDuration(audioPath)
-    job = {"id": job_id, "status": "queued", "progress": 0, "mlEnabled": ENABLE_ML, "outputUrl": None, "error": None}
+    job = {"id": job_id, "status": "queued", "progress": 0, "phase": "En cola", "mlEnabled": ENABLE_ML, "outputUrl": None, "error": None}
     (job_dir / "job.json").write_text(json.dumps(job, indent=2), encoding="utf-8")
     return job
 

@@ -21,7 +21,9 @@
         <div class="section-heading"><p class="step">01</p><h2 id="demo-title">Reproduce un video preparado</h2><p>Cada opción combina un audio público CC0 con la imagen del proyecto y un MP4 ya generado. Selecciona una opción y pulsa reproducir.</p></div>
         <label for="demo-selector">Audio de prueba</label>
         <select id="demo-selector" aria-label="Seleccionar audio demo"></select>
-        <label for="demo-image">Imagen para esta prueba</label>
+        <label>Imagen para esta prueba</label>
+        <div id="demo-image-grid" class="image-grid" aria-label="Imágenes precargadas"></div>
+        <label for="demo-image">O carga otra imagen</label>
         <input id="demo-image" type="file" accept="image/png,image/jpeg" />
         <button id="demo-render" class="button" type="button">Generar con esta imagen</button>
         <video id="demo-video" controls preload="metadata" poster="/artifacts/demo/ritmo-de-luz-demo-poster.jpg">
@@ -39,6 +41,17 @@
           <button class="button" type="submit">Generar MP4</button>
         </form>
         <p id="render-feedback" class="feedback" role="status"></p>
+        <div id="render-process" class="render-process" hidden aria-live="polite">
+          <p class="process-title">Construcción del resultado</p>
+          <ol>
+            <li data-step="1"><span>1</span> Cargar imagen y audio</li>
+            <li data-step="2"><span>2</span> Analizar bandas y energía</li>
+            <li data-step="3"><span>3</span> Definir estados visuales</li>
+            <li data-step="4"><span>4</span> Construir mosaicos</li>
+            <li data-step="5"><span>5</span> Exportar MP4</li>
+          </ol>
+          <p id="render-phase" class="hint">En cola</p>
+        </div>
       </section>
 
       <section class="panel compact" aria-labelledby="method-title">

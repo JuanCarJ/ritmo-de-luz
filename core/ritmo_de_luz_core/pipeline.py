@@ -4,7 +4,7 @@ from __future__ import annotations
 import shutil
 import subprocess
 import tempfile
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from pathlib import Path
 
 from .audio import analyzeAudio
@@ -68,7 +68,7 @@ def buildMosaicFrame(image, *, mel: Sequence[float] = (), intensity: float = 1.0
 
 def generateMosaicMp4(image, audio, output: str, *, sampleRate: int | None = None,
                       fps: int = 30, size=(960, 540), rows: int = 4, columns: int = 6,
-                      useMl: bool = False) -> str:
+                      useMl: bool = False, onProgress: Callable[[int, str], None] | None = None) -> str:
     """Genera un MP4 de mosaicos reactivos desde rutas o arrays de audio e imagen."""
     try:
         import numpy as np
@@ -92,6 +92,8 @@ def generateMosaicMp4(image, audio, output: str, *, sampleRate: int | None = Non
         raise ValueError("sampleRate is required when audio is an array")
     if samples.size == 0:
         raise ValueError("audio must contain at least one sample")
+    if onProgress:
+        onProgress(20, "Analizando audio")
     try:
         import imageio.v3 as iio
     except Exception as exc:
@@ -99,6 +101,8 @@ def generateMosaicMp4(image, audio, output: str, *, sampleRate: int | None = Non
     features = analyzeAudio(samples, sampleRate, melBands=12)
     palette = extractPalette(source.reshape(-1, 3)[::max(1, source.shape[0] * source.shape[1] // 2000)], useMl=useMl)
     states = clusterStates(features, palette, useMl=useMl)
+    if onProgress:
+        onProgress(35, "Definiendo estados visuales")
     duration = max(1, round(len(samples) / sampleRate * fps))
     frames = []
     for idx in range(duration):
@@ -114,7 +118,11 @@ def generateMosaicMp4(image, audio, output: str, *, sampleRate: int | None = Non
         color = state.color if state else (255, 255, 255)
         frames.append(buildMosaicFrame(source, mel=mel, intensity=intensity, color=color,
                                        rows=rows, columns=columns, size=size))
+        if onProgress and (idx == duration - 1 or idx % max(1, duration // 10) == 0):
+            onProgress(35 + round(50 * (idx + 1) / duration), "Construyendo mosaicos")
     iio.imwrite(output, np.asarray(frames), fps=fps)
+    if onProgress:
+        onProgress(95, "Exportando MP4")
     if audio_path and shutil.which("ffmpeg"):
         with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp:
             muxed = tmp.name

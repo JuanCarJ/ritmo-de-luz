@@ -36,5 +36,22 @@
       "durationSeconds": 20,
       "mlEnabled": true
     }
+  ],
+  "images": [
+    {
+      "id": "aurora",
+      "name": "Aurora",
+      "imageUrl": "/artifacts/demo/images/aurora.png"
+    },
+    {
+      "id": "pulso",
+      "name": "Pulso",
+      "imageUrl": "/artifacts/demo/images/pulso.png"
+    },
+    {
+      "id": "cosmos",
+      "name": "Cosmos",
+      "imageUrl": "/artifacts/demo/images/cosmos.png"
+    }
   ]
 }

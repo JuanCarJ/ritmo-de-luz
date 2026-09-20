@@ -15,8 +15,22 @@ h1,h2,p { margin-top:0; } h1 { margin-bottom:14px; font-size:clamp(2.2rem,6vw,4.
 label { display:grid; gap:7px; margin-bottom:16px; font-weight:650; font-size:.9rem; }
 select,input[type=file] { width:100%; min-height:42px; padding:9px; border:1px solid var(--line); border-radius:7px; background:#fff; color:var(--ink); font:inherit; }
 small { color:var(--muted); font-weight:400; }
+.image-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px; }
+.image-option { padding:0; overflow:hidden; border:2px solid transparent; border-radius:8px; background:#fff; color:var(--ink); font:inherit; cursor:pointer; text-align:left; }
+.image-option.selected { border-color:var(--accent); }
+.image-option img { display:block; width:100%; aspect-ratio:16/9; object-fit:cover; }
+.image-option span { display:block; padding:7px 9px; font-size:.78rem; font-weight:650; }
 video { display:block; width:100%; margin-top:20px; background:#10151a; border-radius:8px; }
 .render-form { display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:end; } .button { min-height:42px; padding:0 18px; border:0; border-radius:7px; color:#fff; background:var(--accent); font:inherit; font-weight:700; cursor:pointer; } .button:hover { background:#0e584f; }
 .feedback { min-height:24px; margin:16px 0 0; color:var(--accent); } .process { display:grid; gap:10px; padding-left:20px; margin:0; } .compact { margin-bottom:42px; }
+.render-process { margin-top:20px; padding-top:16px; border-top:1px solid var(--line); }
+.process-title { margin-bottom:10px; font-weight:700; }
+.render-process ol { display:grid; gap:8px; padding:0; margin:0; list-style:none; }
+.render-process li { display:flex; align-items:center; gap:9px; color:var(--muted); font-size:.86rem; }
+.render-process li span { display:grid; place-items:center; width:23px; height:23px; border:1px solid var(--line); border-radius:50%; font-size:.72rem; }
+.render-process li.active { color:var(--accent); font-weight:700; }
+.render-process li.active span { border-color:var(--accent); background:var(--accent); color:#fff; }
+.render-process li.done { color:var(--ink); }
+.render-process li.done span { border-color:var(--accent); color:var(--accent); }
 .footer { padding:0 0 30px; color:var(--muted); font-size:.85rem; }
-@media (max-width:700px) { .render-form { grid-template-columns:1fr; gap:0; } .panel { padding:18px; } }
+@media (max-width:700px) { .render-form { grid-template-columns:1fr; gap:0; } .image-grid { grid-template-columns:1fr; } .panel { padding:18px; } }
