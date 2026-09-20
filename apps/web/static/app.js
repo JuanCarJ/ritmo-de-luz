@@ -33,6 +33,9 @@ function buildPipelineVisuals() {
     tile.style.setProperty('--tile-index', index);
     document.querySelector('#pipeline-grid').appendChild(tile);
   }
+  const context = document.querySelector('#pipeline-spectrogram').getContext('2d');
+  context.fillStyle = '#17202a';
+  context.fillRect(0, 0, 240, 84);
 }
 
 function updatePipelineVisual(progress = 0, complete = false, mlEnabled = false) {
@@ -64,6 +67,24 @@ async function loadAnalysis(analysisUrl) {
   const rms = analysis.rms || [];
   const waveform = analysis.waveform || [];
   const melBands = analysis.melBands || [];
+  const spectrogram = document.querySelector('#pipeline-spectrogram');
+  const context = spectrogram.getContext('2d');
+  context.clearRect(0, 0, spectrogram.width, spectrogram.height);
+  context.fillStyle = '#17202a';
+  context.fillRect(0, 0, spectrogram.width, spectrogram.height);
+  const columns = Math.min(120, melBands.length);
+  const rows = 12;
+  for (let column = 0; column < columns; column += 1) {
+    const sourceIndex = Math.floor(column * melBands.length / columns);
+    const frame = melBands[sourceIndex] || [];
+    for (let row = 0; row < rows; row += 1) {
+      const value = Number(frame[row] || 0);
+      const lightness = 14 + Math.round(value * 58);
+      context.fillStyle = `hsl(${178 - row * 8}, 70%, ${lightness}%)`;
+      context.fillRect(column * spectrogram.width / columns, (rows - row - 1) * spectrogram.height / rows,
+        Math.ceil(spectrogram.width / columns), Math.ceil(spectrogram.height / rows));
+    }
+  }
   document.querySelectorAll('#pipeline-wave span').forEach((bar, index, bars) => {
     const sourceIndex = Math.floor(index * waveform.length / bars.length);
     bar.style.height = `${18 + Math.abs(waveform[sourceIndex] || 0) * 80}%`;

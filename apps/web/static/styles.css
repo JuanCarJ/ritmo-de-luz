@@ -37,9 +37,6 @@ video { display:block; width:100%; margin-top:20px; background:#10151a; border-r
 .render-process li.done span { border-color:var(--accent); color:var(--accent); }
 .technical-note { margin-top:18px; padding:14px; border-left:3px solid var(--accent); background:#f1f7f5; font-size:.86rem; }
 .technical-note p { margin:4px 0 0; color:var(--muted); }
-.explanation-guide { margin-top:16px; color:var(--muted); font-size:.84rem; }
-.explanation-guide summary { color:var(--accent); cursor:pointer; font-weight:700; }
-.explanation-guide ol { display:grid; gap:7px; padding-left:20px; }
 .visual-pipeline { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:20px; }
 .visual-stage { min-width:0; padding:10px; border:1px solid var(--line); border-radius:8px; background:#fbfcfc; }
 .visual-stage header { display:flex; gap:6px; align-items:center; margin-bottom:9px; font-size:.76rem; }
@@ -52,6 +49,7 @@ video { display:block; width:100%; margin-top:20px; background:#10151a; border-r
 .wave-bars,.frequency-bars,.mini-bars { display:flex; align-items:end; gap:2px; height:45px; }
 .wave-bars span,.frequency-bars span,.mini-bars span { flex:1; min-width:2px; border-radius:2px 2px 0 0; background:var(--accent); }
 .frequency-bars span { background:#4b9c90; }
+.visual-stage canvas { display:block; width:100%; height:84px; margin-bottom:6px; border-radius:5px; image-rendering:auto; }
 .mini-bars { height:20px; }
 .mini-bars.normalized { border-top:1px dashed var(--accent); }
 .mini-bars.normalized span { background:#e39b3b; }
