@@ -15,6 +15,7 @@ samplesDir = root / "samples"
 demoDir = root / "artifacts" / "demo"
 demoAudioDir = demoDir / "audio"
 demoImageDir = demoDir / "images"
+demoAnalysisDir = demoDir / "analysis"
 publicAudios = [
     ("menu-loop", "menu-loop.wav", "Loop musical CC0 para ritmo y ataques."),
     ("peaceful-forest", "peaceful-forest.wav", "Textura ambiental CC0 para suavizado."),
@@ -69,12 +70,14 @@ def trimAudio(sourcePath: Path, targetPath: Path, seconds: int = 20) -> None:
 
 
 def main() -> int:
+    from ritmo_de_luz_core.audio import analyzeAudio
     from ritmo_de_luz_core.pipeline import generateMosaicMp4
 
     imagePath = ensureImage()
     images = ensureImages()
     demoDir.mkdir(parents=True, exist_ok=True)
     demoAudioDir.mkdir(parents=True, exist_ok=True)
+    demoAnalysisDir.mkdir(parents=True, exist_ok=True)
     demos = []
     for audioId, audioName, description in publicAudios:
         sourcePath = samplesDir / audioName
@@ -82,6 +85,16 @@ def main() -> int:
             raise FileNotFoundError(f"Falta el audio público: {sourcePath}")
         trimmedPath = demoAudioDir / f"{audioId}.wav"
         trimAudio(sourcePath, trimmedPath, seconds=20)
+        audioSamples, sampleRate = sf.read(trimmedPath, dtype="float32", always_2d=False)
+        features = analyzeAudio(audioSamples, int(sampleRate), melBands=12)
+        analysisPath = demoAnalysisDir / f"{audioId}.json"
+        analysisPath.write_text(json.dumps({
+            "times": features.times,
+            "rms": features.rms,
+            "spectralCentroid": features.spectral_centroid,
+            "onset": features.onset,
+            "melBands": features.mel_bands,
+        }), encoding="utf-8")
         outputPath = demoDir / f"ritmo-de-luz-{audioId}.mp4"
         generateMosaicMp4(image=imagePath, audio=trimmedPath, output=str(outputPath), useMl=True)
         demos.append({
@@ -89,6 +102,7 @@ def main() -> int:
             "name": audioId.replace("-", " ").title(),
             "audio": audioName,
             "audioUrl": f"/artifacts/demo/audio/{trimmedPath.name}",
+            "analysisUrl": f"/artifacts/demo/analysis/{analysisPath.name}",
             "videoUrl": f"/artifacts/demo/{outputPath.name}",
             "description": description,
             "durationSeconds": 20,

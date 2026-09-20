@@ -10,10 +10,69 @@ const renderPhase = document.querySelector('#render-phase');
 let selectedDemo = null;
 let selectedImageUrl = null;
 
+function buildPipelineVisuals() {
+  for (let index = 0; index < 20; index += 1) {
+    const waveBar = document.createElement('span');
+    waveBar.style.height = `${20 + ((index * 17) % 70)}%`;
+    document.querySelector('#pipeline-wave').appendChild(waveBar);
+  }
+  for (let index = 0; index < 12; index += 1) {
+    const band = document.createElement('span');
+    band.style.height = `${25 + ((index * 23) % 65)}%`;
+    document.querySelector('#pipeline-bands').appendChild(band);
+  }
+  for (const containerId of ['raw-bars', 'normalized-bars']) {
+    for (let index = 0; index < 12; index += 1) {
+      const bar = document.createElement('span');
+      bar.style.height = `${20 + ((index * (containerId === 'raw-bars' ? 31 : 19)) % 70)}%`;
+      document.querySelector(`#${containerId}`).appendChild(bar);
+    }
+  }
+  for (let index = 0; index < 24; index += 1) {
+    const tile = document.createElement('span');
+    tile.style.setProperty('--tile-index', index);
+    document.querySelector('#pipeline-grid').appendChild(tile);
+  }
+}
+
+function updatePipelineVisual(progress = 0, complete = false) {
+  const currentStage = complete ? 5 : progress >= 95 ? 5 : progress >= 40 ? 4 : progress >= 35 ? 3 : progress >= 15 ? 2 : 1;
+  document.querySelectorAll('[data-visual-stage]').forEach((stage) => {
+    const stageNumber = Number(stage.dataset.visualStage);
+    stage.classList.toggle('visual-active', stageNumber === currentStage && !complete);
+    stage.classList.toggle('visual-done', stageNumber <= currentStage && complete);
+  });
+  const outputState = document.querySelector('#output-state');
+  outputState.textContent = complete ? 'MP4 listo' : progress ? `${progress}% en proceso` : 'Esperando render';
+}
+
+async function loadAnalysis(analysisUrl) {
+  if (!analysisUrl) return;
+  const response = await fetch(analysisUrl);
+  if (!response.ok) return;
+  const analysis = await response.json();
+  const rms = analysis.rms || [];
+  const melBands = analysis.melBands || [];
+  document.querySelectorAll('#pipeline-wave span').forEach((bar, index, bars) => {
+    const sourceIndex = Math.floor(index * rms.length / bars.length);
+    bar.style.height = `${18 + (rms[sourceIndex] || 0) * 80}%`;
+  });
+  const bandValues = melBands.reduce((totals, frame) => frame.map((value, index) => totals[index] + value), new Array(12).fill(0));
+  document.querySelectorAll('#pipeline-bands span').forEach((bar, index) => {
+    const value = bandValues[index] / Math.max(1, melBands.length);
+    bar.style.height = `${18 + value * 80}%`;
+  });
+  document.querySelectorAll('#raw-bars span').forEach((bar, index) => {
+    bar.style.height = `${18 + (rms[index % Math.max(1, rms.length)] || 0) * 80}%`;
+  });
+}
+
 function selectDemo(demo) {
   selectedDemo = demo;
   demoVideo.src = demo.videoUrl;
   demoVideo.load();
+  updatePipelineVisual(0, true);
+  loadAnalysis(demo.analysisUrl);
   demoMeta.textContent = `Video preparado · ${demo.description || 'Audio público'} · ${demo.durationSeconds || 20} s · ${demo.mlEnabled !== false ? 'ML activado' : 'modo determinista'}`;
 }
 
@@ -53,6 +112,7 @@ function updateProcess(job) {
   renderProcess.hidden = false;
   renderPhase.textContent = `${job.phase || 'Procesando'} · ${job.progress || 0}%`;
   const progress = job.progress || 0;
+  updatePipelineVisual(progress, job.status === 'completed');
   const currentStep = progress >= 95 ? 5 : progress >= 40 ? 4 : progress >= 35 ? 3 : progress >= 15 ? 2 : 1;
   document.querySelectorAll('[data-step]').forEach((step) => {
     const stepNumber = Number(step.dataset.step);
@@ -75,6 +135,9 @@ async function loadDemo() {
       button.innerHTML = `<img src="${image.imageUrl}" alt="${image.name}" /><span>${image.name}</span>`;
       button.addEventListener('click', () => {
         selectedImageUrl = image.imageUrl;
+        document.querySelector('#pipeline-image').src = image.imageUrl;
+        updatePipelineVisual(0, false);
+        demoMeta.textContent = `${image.name} seleccionada · pulsa “Generar con esta imagen”`;
         document.querySelectorAll('.image-option').forEach((item) => item.classList.remove('selected'));
         button.classList.add('selected');
         demoImage.value = '';
@@ -122,6 +185,15 @@ async function pollJob(jobId, updateDemo = false) {
 }
 
 demoRender.addEventListener('click', () => renderWithImage(demoImage.files[0], selectedDemo?.audioUrl));
+demoImage.addEventListener('change', () => {
+  const file = demoImage.files[0];
+  if (!file) return;
+  selectedImageUrl = null;
+  document.querySelector('#pipeline-image').src = URL.createObjectURL(file);
+  updatePipelineVisual(0, false);
+  demoMeta.textContent = 'Imagen cargada · pulsa “Generar con esta imagen”';
+  document.querySelectorAll('.image-option').forEach((item) => item.classList.remove('selected'));
+});
 
 document.querySelector('#render-form').addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -138,3 +210,4 @@ document.querySelector('#render-form').addEventListener('submit', async (event) 
 });
 
 loadDemo();
+buildPipelineVisuals();

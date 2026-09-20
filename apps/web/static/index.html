@@ -41,6 +41,13 @@
           <strong>Extensión opcional</strong>
           <p>K-Means agrupa estados acústicos y colores después de la ruta base. Se activa con <code>ENABLE_ML=true</code>; el render local nuevo usa la ruta determinista por defecto.</p>
         </div>
+        <div class="visual-pipeline" aria-label="Visualización del pipeline">
+          <article class="visual-stage" data-visual-stage="1"><header><span>01</span><strong>Entrada</strong></header><div class="input-visual"><img id="pipeline-image" src="/artifacts/demo/images/aurora.png" alt="Imagen seleccionada" /><div id="pipeline-wave" class="wave-bars" aria-label="Forma de onda del audio"></div></div></article>
+          <article class="visual-stage" data-visual-stage="2"><header><span>02</span><strong>Frecuencias</strong></header><div id="pipeline-bands" class="frequency-bars" aria-label="12 bandas mel"></div><small>12 bandas mel · energía por frecuencia</small></article>
+          <article class="visual-stage" data-visual-stage="3"><header><span>03</span><strong>Normalización</strong></header><div class="normalization-visual"><div id="raw-bars" class="mini-bars"></div><div id="normalized-bars" class="mini-bars normalized"></div></div><small>antes → escala 0–1 + suavizado</small></article>
+          <article class="visual-stage" data-visual-stage="4"><header><span>04</span><strong>Mapeo 4 × 6</strong></header><div id="pipeline-grid" class="pipeline-grid" aria-label="24 mosaicos de imagen"></div><small>cada banda controla dos mosaicos</small></article>
+          <article class="visual-stage" data-visual-stage="5"><header><span>05</span><strong>MP4</strong></header><div class="output-visual"><span id="output-state">Esperando render</span><b>30 FPS</b></div><small>frames + audio sincronizado</small></article>
+        </div>
         <details class="explanation-guide">
           <summary>Guía breve para explicarlo</summary>
           <ol>
