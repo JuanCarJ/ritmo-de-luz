@@ -13,18 +13,18 @@ let selectedImageUrl = null;
 function buildPipelineVisuals() {
   for (let index = 0; index < 20; index += 1) {
     const waveBar = document.createElement('span');
-    waveBar.style.height = `${20 + ((index * 17) % 70)}%`;
+    waveBar.style.height = '0%';
     document.querySelector('#pipeline-wave').appendChild(waveBar);
   }
   for (let index = 0; index < 12; index += 1) {
     const band = document.createElement('span');
-    band.style.height = `${25 + ((index * 23) % 65)}%`;
+    band.style.height = '0%';
     document.querySelector('#pipeline-bands').appendChild(band);
   }
   for (const containerId of ['raw-bars', 'normalized-bars']) {
     for (let index = 0; index < 12; index += 1) {
       const bar = document.createElement('span');
-      bar.style.height = `${20 + ((index * (containerId === 'raw-bars' ? 31 : 19)) % 70)}%`;
+      bar.style.height = '0%';
       document.querySelector(`#${containerId}`).appendChild(bar);
     }
   }
@@ -35,8 +35,8 @@ function buildPipelineVisuals() {
   }
 }
 
-function updatePipelineVisual(progress = 0, complete = false) {
-  const currentStage = complete ? 5 : progress >= 95 ? 5 : progress >= 40 ? 4 : progress >= 35 ? 3 : progress >= 15 ? 2 : 1;
+function updatePipelineVisual(progress = 0, complete = false, mlEnabled = false) {
+  const currentStage = complete ? (mlEnabled ? 6 : 5) : progress >= 95 ? 5 : progress >= 40 ? 4 : progress >= 35 ? 3 : progress >= 15 ? 2 : 1;
   document.querySelectorAll('[data-visual-stage]').forEach((stage) => {
     const stageNumber = Number(stage.dataset.visualStage);
     stage.classList.toggle('visual-active', stageNumber === currentStage && !complete);
@@ -46,16 +46,27 @@ function updatePipelineVisual(progress = 0, complete = false) {
   outputState.textContent = complete ? 'MP4 listo' : progress ? `${progress}% en proceso` : 'Esperando render';
 }
 
+function updateGridImage(imageUrl) {
+  if (!imageUrl) return;
+  document.querySelectorAll('#pipeline-grid span').forEach((tile, index) => {
+    const column = index % 6;
+    const row = Math.floor(index / 6);
+    tile.style.backgroundImage = `url(${imageUrl})`;
+    tile.style.backgroundPosition = `${column * 20}% ${row * 33.333}%`;
+  });
+}
+
 async function loadAnalysis(analysisUrl) {
   if (!analysisUrl) return;
   const response = await fetch(analysisUrl);
   if (!response.ok) return;
   const analysis = await response.json();
   const rms = analysis.rms || [];
+  const waveform = analysis.waveform || [];
   const melBands = analysis.melBands || [];
   document.querySelectorAll('#pipeline-wave span').forEach((bar, index, bars) => {
-    const sourceIndex = Math.floor(index * rms.length / bars.length);
-    bar.style.height = `${18 + (rms[sourceIndex] || 0) * 80}%`;
+    const sourceIndex = Math.floor(index * waveform.length / bars.length);
+    bar.style.height = `${18 + Math.abs(waveform[sourceIndex] || 0) * 80}%`;
   });
   const bandValues = melBands.reduce((totals, frame) => frame.map((value, index) => totals[index] + value), new Array(12).fill(0));
   document.querySelectorAll('#pipeline-bands span').forEach((bar, index) => {
@@ -63,15 +74,30 @@ async function loadAnalysis(analysisUrl) {
     bar.style.height = `${18 + value * 80}%`;
   });
   document.querySelectorAll('#raw-bars span').forEach((bar, index) => {
-    bar.style.height = `${18 + (rms[index % Math.max(1, rms.length)] || 0) * 80}%`;
+    const rawValue = analysis.rawRms?.[index % Math.max(1, analysis.rawRms.length)] || 0;
+    bar.style.height = `${18 + rawValue * 80}%`;
   });
+  document.querySelectorAll('#normalized-bars span').forEach((bar, index) => {
+    const normalizedValue = rms[index % Math.max(1, rms.length)] || 0;
+    bar.style.height = `${18 + normalizedValue * 80}%`;
+  });
+  const clusterVisual = document.querySelector('#kmeans-visual');
+  clusterVisual.replaceChildren();
+  (analysis.states || []).forEach((state) => {
+    const dot = document.createElement('span');
+    dot.title = `${state.name} · intensidad ${Number(state.intensity).toFixed(2)}`;
+    dot.style.background = `rgb(${state.color.join(',')})`;
+    clusterVisual.appendChild(dot);
+  });
+  document.querySelector('#kmeans-state').textContent = analysis.states?.length ? `${analysis.states.length} estados agrupados` : 'sin ML en esta ruta';
 }
 
 function selectDemo(demo) {
   selectedDemo = demo;
   demoVideo.src = demo.videoUrl;
   demoVideo.load();
-  updatePipelineVisual(0, true);
+  updatePipelineVisual(0, true, demo.mlEnabled !== false);
+  updateGridImage(selectedImageUrl);
   loadAnalysis(demo.analysisUrl);
   demoMeta.textContent = `Video preparado · ${demo.description || 'Audio público'} · ${demo.durationSeconds || 20} s · ${demo.mlEnabled !== false ? 'ML activado' : 'modo determinista'}`;
 }
@@ -112,7 +138,7 @@ function updateProcess(job) {
   renderProcess.hidden = false;
   renderPhase.textContent = `${job.phase || 'Procesando'} · ${job.progress || 0}%`;
   const progress = job.progress || 0;
-  updatePipelineVisual(progress, job.status === 'completed');
+  updatePipelineVisual(progress, job.status === 'completed', job.mlEnabled === true);
   const currentStep = progress >= 95 ? 5 : progress >= 40 ? 4 : progress >= 35 ? 3 : progress >= 15 ? 2 : 1;
   document.querySelectorAll('[data-step]').forEach((step) => {
     const stepNumber = Number(step.dataset.step);
@@ -136,6 +162,7 @@ async function loadDemo() {
       button.addEventListener('click', () => {
         selectedImageUrl = image.imageUrl;
         document.querySelector('#pipeline-image').src = image.imageUrl;
+        updateGridImage(image.imageUrl);
         updatePipelineVisual(0, false);
         demoMeta.textContent = `${image.name} seleccionada · pulsa “Generar con esta imagen”`;
         document.querySelectorAll('.image-option').forEach((item) => item.classList.remove('selected'));
@@ -190,6 +217,7 @@ demoImage.addEventListener('change', () => {
   if (!file) return;
   selectedImageUrl = null;
   document.querySelector('#pipeline-image').src = URL.createObjectURL(file);
+  updateGridImage(document.querySelector('#pipeline-image').src);
   updatePipelineVisual(0, false);
   demoMeta.textContent = 'Imagen cargada · pulsa “Generar con esta imagen”';
   document.querySelectorAll('.image-option').forEach((item) => item.classList.remove('selected'));

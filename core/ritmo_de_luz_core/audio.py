@@ -39,19 +39,22 @@ def analyzeAudio(samples: Sequence[float], sampleRate: int, *, frameSize: int = 
     frames = np.stack([signal[i * hopSize:i * hopSize + frameSize] * window for i in range(count)])
     magnitudes = np.abs(np.fft.rfft(frames, axis=1))
     power = magnitudes ** 2
-    rms = np.sqrt(np.mean(frames ** 2, axis=1))
-    rms = _normalize(rms)
+    rawRms = np.sqrt(np.mean(frames ** 2, axis=1))
+    rms = _normalize(rawRms)
     freqs = np.fft.rfftfreq(frameSize, 1.0 / sampleRate)
     denom = magnitudes.sum(axis=1)
-    centroid = np.divide(magnitudes @ freqs, denom, out=np.zeros_like(denom), where=denom > 1e-12)
-    centroid = _normalize(centroid)
+    rawCentroid = np.divide(magnitudes @ freqs, denom, out=np.zeros_like(denom), where=denom > 1e-12)
+    centroid = _normalize(rawCentroid)
     flux = np.maximum(0.0, np.diff(power, axis=0, prepend=power[:1])).sum(axis=1)
-    onset = _normalize(flux)
+    rawOnset = flux
+    onset = _normalize(rawOnset)
     bands = _mel_filterbank(magnitudes, sampleRate, melBands)
     bands = np.asarray([_normalize(row) for row in bands.T]).T if bands.size else bands
     return AudioFeatures(tuple(np.arange(count) * hopSize / sampleRate),
                          tuple(_smooth(rms, smoothing)), tuple(_smooth(centroid, smoothing)),
-                         tuple(_smooth(onset, smoothing)), tuple(tuple(float(x) for x in row) for row in bands))
+                         tuple(_smooth(onset, smoothing)), tuple(tuple(float(x) for x in row) for row in bands),
+                         tuple(float(x) for x in rawRms), tuple(float(x) for x in rawCentroid),
+                         tuple(float(x) for x in rawOnset))
 
 
 def _normalize(values):

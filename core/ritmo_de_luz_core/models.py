@@ -11,6 +11,9 @@ class AudioFeatures:
     spectral_centroid: tuple[float, ...]
     onset: tuple[float, ...]
     mel_bands: tuple[tuple[float, ...], ...] = ()
+    rawRms: tuple[float, ...] = ()
+    rawSpectralCentroid: tuple[float, ...] = ()
+    rawOnset: tuple[float, ...] = ()
 
 
 @dataclass(frozen=True)

@@ -71,7 +71,9 @@ def trimAudio(sourcePath: Path, targetPath: Path, seconds: int = 20) -> None:
 
 def main() -> int:
     from ritmo_de_luz_core.audio import analyzeAudio
+    from ritmo_de_luz_core.palette import extractPalette
     from ritmo_de_luz_core.pipeline import generateMosaicMp4
+    from ritmo_de_luz_core.states import clusterStates
 
     imagePath = ensureImage()
     images = ensureImages()
@@ -87,13 +89,22 @@ def main() -> int:
         trimAudio(sourcePath, trimmedPath, seconds=20)
         audioSamples, sampleRate = sf.read(trimmedPath, dtype="float32", always_2d=False)
         features = analyzeAudio(audioSamples, int(sampleRate), melBands=12)
+        imagePixels = np.asarray(Image.open(imagePath).convert("RGB")).reshape(-1, 3)
+        palette = extractPalette(imagePixels, useMl=True)
+        states = clusterStates(features, palette, useMl=True)
         analysisPath = demoAnalysisDir / f"{audioId}.json"
         analysisPath.write_text(json.dumps({
             "times": features.times,
+            "waveform": [float(value) for value in audioSamples[::max(1, len(audioSamples) // 120)]],
             "rms": features.rms,
+            "rawRms": features.rawRms,
             "spectralCentroid": features.spectral_centroid,
+            "rawSpectralCentroid": features.rawSpectralCentroid,
             "onset": features.onset,
+            "rawOnset": features.rawOnset,
             "melBands": features.mel_bands,
+            "palette": {"colors": palette.colors, "weights": palette.weights},
+            "states": [{"name": state.name, "intensity": state.intensity, "color": state.color, "features": state.features} for state in states],
         }), encoding="utf-8")
         outputPath = demoDir / f"ritmo-de-luz-{audioId}.mp4"
         generateMosaicMp4(image=imagePath, audio=trimmedPath, output=str(outputPath), useMl=True)

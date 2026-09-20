@@ -47,17 +47,8 @@
           <article class="visual-stage" data-visual-stage="3"><header><span>03</span><strong>Normalización</strong></header><div class="normalization-visual"><div id="raw-bars" class="mini-bars"></div><div id="normalized-bars" class="mini-bars normalized"></div></div><small>antes → escala 0–1 + suavizado</small></article>
           <article class="visual-stage" data-visual-stage="4"><header><span>04</span><strong>Mapeo 4 × 6</strong></header><div id="pipeline-grid" class="pipeline-grid" aria-label="24 mosaicos de imagen"></div><small>cada banda controla dos mosaicos</small></article>
           <article class="visual-stage" data-visual-stage="5"><header><span>05</span><strong>MP4</strong></header><div class="output-visual"><span id="output-state">Esperando render</span><b>30 FPS</b></div><small>frames + audio sincronizado</small></article>
+          <article class="visual-stage" data-visual-stage="6"><header><span>06</span><strong>K-Means</strong></header><div id="kmeans-visual" class="cluster-visual" aria-label="Estados agrupados por K-Means"></div><small id="kmeans-state">extensión opcional</small></article>
         </div>
-        <details class="explanation-guide">
-          <summary>Guía breve para explicarlo</summary>
-          <ol>
-            <li>“La imagen aporta el contenido visual y el audio aporta la señal temporal.”</li>
-            <li>“Extraigo 12 bandas mel y medidas de energía, brillo espectral y ataques.”</li>
-            <li>“Normalizo esas medidas y las asigno a una cuadrícula 4 × 6.”</li>
-            <li>“Cada frame cambia según la energía; K-Means es una mejora opcional de agrupación.”</li>
-            <li>“El resultado es un MP4 reproducible a 30 FPS.”</li>
-          </ol>
-        </details>
         <video id="demo-video" controls preload="metadata" poster="/artifacts/demo/ritmo-de-luz-demo-poster.jpg">
           <source src="/artifacts/demo/ritmo-de-luz-menu-loop.mp4" type="video/mp4" />
           Tu navegador no puede reproducir este video.
