@@ -29,11 +29,11 @@
         <div id="render-process" class="render-process" hidden aria-live="polite">
           <p class="process-title">Construcción del resultado</p>
           <ol>
-            <li data-step="1"><span>1</span><div><strong>Entrada</strong><small>Imagen + audio WAV</small></div></li>
-            <li data-step="2"><span>2</span><div><strong>Análisis base</strong><small>STFT, 12 bandas mel, RMS, centroide y onsets</small></div></li>
-            <li data-step="3"><span>3</span><div><strong>Normalización</strong><small>Escala común y suavizado temporal</small></div></li>
-            <li data-step="4"><span>4</span><div><strong>Mapeo visual</strong><small>4 × 6 mosaicos, brillo, escala y color</small></div></li>
-            <li data-step="5"><span>5</span><div><strong>Salida</strong><small>MP4 a 30 FPS con audio sincronizado</small></div></li>
+            <li data-step="1"><span>1</span><div><strong>Entrada</strong><small>La imagen aporta los píxeles; el WAV aporta la señal que cambia en el tiempo.</small></div></li>
+            <li data-step="2"><span>2</span><div><strong>Análisis base</strong><small>STFT divide el audio en ventanas para observar frecuencia y tiempo; 12 bandas mel resumen graves, medios y agudos; RMS mide energía, centroide mide brillo y onset detecta ataques.</small></div></li>
+            <li data-step="3"><span>3</span><div><strong>Normalización y suavizado</strong><small>Lleva todas las medidas a 0–1, aplica una media móvil y después interpola entre ventanas para evitar saltos.</small></div></li>
+            <li data-step="4"><span>4</span><div><strong>Mapeo visual</strong><small>Repite cada banda en dos de los 24 mosaicos y convierte su energía en brillo, escala, transparencia y color.</small></div></li>
+            <li data-step="5"><span>5</span><div><strong>Salida</strong><small>Compone los frames a 30 FPS, mezcla el audio cuando FFmpeg está disponible y entrega un MP4.</small></div></li>
           </ol>
           <p id="render-phase" class="hint">En cola</p>
         </div>
@@ -72,9 +72,9 @@
         <div class="section-heading"><p class="step">03</p><h2 id="method-title">Qué hace el sistema</h2><p>El audio no se muestra aislado: controla el aspecto y el movimiento del video.</p></div>
         <ol class="process">
           <li><strong>Entrada:</strong> recibe una imagen PNG/JPG y un audio WAV de 20 a 40 segundos.</li>
-          <li><strong>Base — análisis:</strong> divide el audio en ventanas y calcula RMS, centroide, onsets y 12 bandas mel.</li>
-          <li><strong>Base — normalización:</strong> lleva esas medidas a una escala común para compararlas durante todo el audio.</li>
-          <li><strong>Base — composición:</strong> divide la imagen en una cuadrícula 4 × 6 (24 mosaicos); cada una de las 12 bandas se reutiliza en dos regiones para modular brillo, escala y color a 30 frames por segundo.</li>
+          <li><strong>Base — análisis:</strong> STFT conserva la evolución temporal; las 12 bandas mel resumen el espectro; RMS, centroide y onsets describen energía, brillo y ataques.</li>
+          <li><strong>Base — normalización:</strong> convierte medidas heterogéneas a 0–1, suaviza la envolvente e interpola entre ventanas.</li>
+          <li><strong>Base — composición:</strong> divide la imagen en una cuadrícula 4 × 6 (24 mosaicos); cada una de las 12 bandas se reutiliza en dos regiones para modular brillo, escala, transparencia y color.</li>
           <li><strong>Base — salida:</strong> exporta un MP4 sincronizado y devuelve un enlace para abrirlo.</li>
           <li><strong>Extensión opcional — K-Means:</strong> agrupa ventanas acústicas y colores para añadir estados visuales. Se activa con <code>ENABLE_ML=true</code>; si no, se usa el resultado determinista base.</li>
         </ol>
