@@ -44,7 +44,7 @@
           <li><strong>Entrada:</strong> recibe una imagen PNG/JPG y un audio WAV de 20 a 40 segundos.</li>
           <li><strong>Base — análisis:</strong> divide el audio en ventanas y calcula RMS, centroide, onsets y 12 bandas mel.</li>
           <li><strong>Base — normalización:</strong> lleva esas medidas a una escala común para compararlas durante todo el audio.</li>
-          <li><strong>Base — composición:</strong> divide la imagen en 24 mosaicos, modula brillo, escala y color, y genera 30 frames por segundo.</li>
+          <li><strong>Base — composición:</strong> divide la imagen en una cuadrícula 4 × 6 (24 mosaicos); cada una de las 12 bandas se reutiliza en dos regiones para modular brillo, escala y color a 30 frames por segundo.</li>
           <li><strong>Base — salida:</strong> exporta un MP4 sincronizado y devuelve un enlace para abrirlo.</li>
           <li><strong>Extensión opcional — K-Means:</strong> agrupa ventanas acústicas y colores para añadir estados visuales. Se activa con <code>ENABLE_ML=true</code>; si no, se usa el resultado determinista base.</li>
         </ol>

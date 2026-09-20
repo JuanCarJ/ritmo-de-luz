@@ -3,7 +3,7 @@
 | Requisito | Implementación | Evidencia |
 |---|---|---|
 | 6–12 bandas de frecuencia | 12 bandas normalizadas en `core/ritmo_de_luz_core/audio.py` | MP4 y prueba del core |
-| Mapeo a imagen | mosaico 4 × 6 en `pipeline.py` | MP4 demo |
+| Mapeo a imagen | mosaico 4 × 6 en `pipeline.py`; cada banda mel se aplica a dos regiones | MP4 demo |
 | Transformaciones suaves | interpolación lineal de energía por frame, brillo y escala | MP4 demo |
 | MP4 a FPS fijo | `generateMosaicMp4()` a 30 FPS | `manifest.json` |
 | Reacción a onsets | envolvente de onset incluida en el análisis y estados acústicos | prueba del core |
