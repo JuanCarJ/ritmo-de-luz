@@ -272,13 +272,27 @@ async function loadAnalysis(analysisUrl) {
   renderAnalysisFrame(0);
   const clusterVisual = document.querySelector('#kmeans-visual');
   clusterVisual.replaceChildren();
+  const clusterLegend = document.querySelector('#kmeans-legend');
+  clusterLegend?.replaceChildren();
+  const levelName = (value) => {
+    const score = Number(value) || 0;
+    if (score < 0.34) return 'bajo';
+    if (score < 0.67) return 'medio';
+    return 'alto';
+  };
   (analysis.states || []).forEach((state) => {
     const dot = document.createElement('span');
     dot.title = `${state.name} · intensidad ${Number(state.intensity).toFixed(2)}`;
     dot.style.background = `rgb(${state.color.join(',')})`;
     clusterVisual.appendChild(dot);
+    const features = state.features || {};
+    const card = document.createElement('article');
+    card.className = 'cluster-card';
+    card.innerHTML = `<span class="cluster-swatch" aria-hidden="true"></span><div><strong>Estado ${state.name.replace('state_', '')}</strong><small>Energía ${levelName(state.intensity)} · brillo ${levelName(features.centroid)} · ataques ${levelName(features.onset)}</small></div>`;
+    card.querySelector('.cluster-swatch').style.background = `rgb(${state.color.join(',')})`;
+    clusterLegend?.appendChild(card);
   });
-  document.querySelector('#kmeans-state').textContent = analysis.states?.length ? `${analysis.states.length} estados agrupados` : 'sin ML en esta ruta';
+  document.querySelector('#kmeans-state').textContent = analysis.states?.length ? `${analysis.states.length} perfiles encontrados · cada uno reúne ventanas con comportamiento acústico similar` : 'Sin estados acústicos';
 }
 
 function setMappingPreview(mappingUrl) {
