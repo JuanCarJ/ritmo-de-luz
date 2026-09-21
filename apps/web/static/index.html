@@ -108,7 +108,7 @@
           <circle class="fjoin" cx="270" cy="185" r="3.5"/>
           <a href="#s1" class="fnode"><rect x="80" y="22" width="170" height="46" rx="10"/><circle cx="101" cy="45.0" r="11"/><text class="fnum" x="101" y="49.0">1</text><text class="fphase" x="120" y="41">LECTURA</text><text class="fout" x="120" y="58">Recorte 16:9</text></a>
           <a href="#s2" class="fnode"><rect x="290" y="22" width="170" height="46" rx="10"/><circle cx="311" cy="45.0" r="11"/><text class="fnum" x="311" y="49.0">2</text><text class="fphase" x="330" y="41">EXTRACCIÓN DE COLOR</text><text class="fout" x="330" y="58">5 colores</text></a>
-          <a href="#s7" class="fnode"><rect x="490" y="92" width="170" height="46" rx="10"/><circle cx="511" cy="115.0" r="11"/><text class="fnum" x="511" y="119.0">7</text><text class="fphase" x="530" y="111">AGRUPACIÓN</text><text class="fout" x="530" y="128">4 estados</text></a>
+          <a href="#s7" class="fnode"><rect x="490" y="92" width="170" height="46" rx="10"/><circle cx="511" cy="115.0" r="11"/><text class="fnum" x="511" y="119.0">7</text><text class="fphase" x="530" y="111">AGRUPACIÓN</text><text class="fout" x="530" y="128">4 perfiles</text></a>
           <a href="#s1" class="fnode"><rect x="80" y="162" width="170" height="46" rx="10"/><circle cx="101" cy="185.0" r="11"/><text class="fnum" x="101" y="189.0">1</text><text class="fphase" x="120" y="181">LECTURA</text><text class="fout" x="120" y="198">Tramo de 20 s</text></a>
           <a href="#s3" class="fnode"><rect x="290" y="162" width="170" height="46" rx="10"/><circle cx="311" cy="185.0" r="11"/><text class="fnum" x="311" y="189.0">3</text><text class="fphase" x="330" y="181">TRANSFORMACIÓN</text><text class="fout" x="330" y="198">12 bandas en dB</text></a>
           <a href="#s4" class="fnode"><rect x="490" y="162" width="170" height="46" rx="10"/><circle cx="511" cy="185.0" r="11"/><text class="fnum" x="511" y="189.0">4</text><text class="fphase" x="530" y="181">ESTANDARIZACIÓN</text><text class="fout" x="530" y="198">Escala 0–1</text></a>
@@ -230,12 +230,13 @@
         <header><b>8</b><div><small>Composición</small><h3>Del análisis al video</h3></div></header>
         <div class="viz two">
           <figure>
-            <div class="annotated"><img id="s8-img" alt="Cuadro del video" /><div id="s8-grid" class="grid-overlay"></div></div>
+            <div class="annotated"><video id="s8-video" muted loop playsinline preload="metadata" controls aria-label="Vista sincronizada del video generado"></video><div id="s8-grid" class="grid-overlay"></div></div>
+            <figcaption>La misma salida que arriba, sin audio duplicado. Puedes pausar cualquiera de las dos vistas.</figcaption>
             <ul class="rules">
               <li><b>Banda</b> → brillo y zoom de su mosaico</li>
               <li><b>Graves</b> abajo, <b>agudos</b> arriba</li>
               <li><b>Golpe</b> → destello en todo el cuadro</li>
-              <li><b>Estado</b> → color de las juntas</li>
+              <li><b>Perfil</b> → color de las juntas</li>
             </ul>
           </figure>
           <figure>
