@@ -18,14 +18,21 @@
         <p>Selecciona un audio y una imagen. Escúchalos, recorre el análisis y genera el resultado.</p>
       </section>
 
-      <section class="panel rounded-2xl bg-white shadow-panel" aria-labelledby="demo-title">
-        <div class="section-heading"><p class="step">01</p><h2 id="demo-title">Elige tus entradas</h2><p>Usa una demo preparada o carga tus propios archivos.</p></div>
-        <label for="demo-selector">Audio de prueba</label>
-        <select id="demo-selector" aria-label="Seleccionar audio demo"></select>
-        <audio id="demo-audio" controls preload="metadata" aria-label="Escuchar audio seleccionado"></audio>
-        <label>Imagen</label>
-        <div id="demo-image-grid" class="image-grid" aria-label="Imágenes precargadas"></div>
-        <div class="input-actions"><button id="open-file-modal" class="button button-secondary shadow-sm transition hover:-translate-y-0.5" type="button">Cargar audio e imagen</button><button id="analysis-step" class="button button-secondary shadow-sm transition hover:-translate-y-0.5" type="button">Ejecutar paso a paso</button><button id="demo-render" class="button shadow-sm transition hover:-translate-y-0.5" type="button">Ejecutar completo</button></div>
+      <section class="panel workspace-panel rounded-2xl bg-white shadow-panel" aria-labelledby="demo-title">
+        <div class="section-heading section-heading-main"><div><p class="step">01 / ENTRADAS</p><h2 id="demo-title">Prepara una sesión</h2><p>Escucha el audio, elige una imagen y lanza el análisis real.</p></div><span class="live-badge"><i></i> Motor listo</span></div>
+        <div class="input-layout">
+          <div class="input-source input-source-audio">
+            <div class="field-heading"><span class="field-index">A</span><div><label for="demo-selector">Audio de prueba</label><small>WAV · escucha antes de analizar</small></div></div>
+            <select id="demo-selector" aria-label="Seleccionar audio demo"></select>
+            <audio id="demo-audio" controls preload="metadata" aria-label="Escuchar audio seleccionado"></audio>
+            <p id="demo-meta" class="source-meta">Cargando audio...</p>
+          </div>
+          <div class="input-source input-source-image">
+            <div class="field-heading"><span class="field-index">B</span><div><label>Imagen de partida</label><small>Su paleta colorea el resultado</small></div></div>
+            <div id="demo-image-grid" class="image-grid" aria-label="Imágenes precargadas"></div>
+          </div>
+        </div>
+        <div class="input-actions"><button id="open-file-modal" class="button button-secondary shadow-sm transition hover:-translate-y-0.5" type="button">Cargar mis archivos</button><button id="analysis-step" class="button button-secondary shadow-sm transition hover:-translate-y-0.5" type="button">Ver análisis en vivo</button><button id="demo-render" class="button shadow-sm transition hover:-translate-y-0.5" type="button">Generar composición</button></div>
         <p id="input-selection-status" class="hint">Demo seleccionada · puedes escucharla antes de ejecutar.</p>
         <dialog id="file-modal" class="file-modal rounded-2xl shadow-2xl">
           <form method="dialog" id="file-form">
@@ -36,7 +43,7 @@
           </form>
         </dialog>
         <div id="render-process" class="render-process" hidden aria-live="polite">
-          <p class="process-title">Construcción del resultado</p>
+          <div class="process-head"><p class="process-title">Construcción en tiempo real</p><span class="process-live"><i></i> Sigue el cursor en cada gráfica</span></div>
           <ol>
             <li data-step="1"><span>1</span><div><strong>Entrada</strong><small>La imagen aporta los píxeles; el WAV aporta la señal que cambia en el tiempo.</small></div></li>
             <li data-step="2"><span>2</span><div><strong>Análisis base</strong><small>STFT divide el audio en ventanas para observar frecuencia y tiempo; 12 bandas mel resumen graves, medios y agudos; RMS mide energía, centroide mide brillo y onset detecta ataques.</small></div></li>
@@ -48,8 +55,8 @@
         </div>
         <p id="render-feedback" class="feedback" role="status"></p>
         <div class="technical-note">
-          <strong>K-Means · extensión opcional</strong>
-          <p>Identifica cuatro perfiles acústicos combinando energía, brillo y ataques; cada perfil recibe un color de la imagen.</p>
+          <strong>K-Means · agrupación del resultado</strong>
+          <p>Se aplica al resultado: agrupa cada ventana por energía, brillo espectral y ataques. Esos cuatro estados deciden el color que toma cada mosaico.</p>
         </div>
         <div id="analysis-controls" class="analysis-controls" hidden>
           <button id="analysis-play" class="button" type="button">Reproducir proceso</button>
@@ -78,11 +85,10 @@
             <div class="stage-body output-stage"><video id="demo-video" controls preload="metadata" poster="/artifacts/demo/ritmo-de-luz-demo-poster.jpg"><source src="/artifacts/demo/ritmo-de-luz-menu-loop.mp4" type="video/mp4" />Tu navegador no puede reproducir este video.</video><div class="output-visual"><span id="output-state">Esperando render</span><b>30 FPS</b></div></div>
           </article>
           <article class="visual-stage" data-visual-stage="6">
-            <header><span>06</span><strong>K-Means</strong><small>Extensión opcional</small></header>
+            <header><span>06</span><strong>K-Means</strong><small>Estados acústicos del resultado</small></header>
             <div class="stage-body cluster-stage"><div id="kmeans-visual" class="cluster-visual" aria-label="Estados agrupados por K-Means"></div><p id="kmeans-state">Sin agrupar</p></div>
           </article>
         </div>
-        <p id="demo-meta" class="hint">Cargando demo...</p>
       </section>
 
     </main>

@@ -327,7 +327,7 @@ function selectDemo(demo) {
   demoVideo.load();
   demoAudio.src = demo.audioUrl;
   demoAudio.load();
-  updatePipelineVisual(0, true, demo.mlEnabled !== false);
+  updatePipelineVisual(0, false, demo.mlEnabled !== false);
   updateGridImage(selectedImageUrl);
   loadAnalysis(demo.analysisUrl);
   setMappingPreview(demo.mappingUrl);

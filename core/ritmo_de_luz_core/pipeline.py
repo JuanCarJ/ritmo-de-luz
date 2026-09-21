@@ -13,7 +13,7 @@ from .palette import extractPalette
 from .states import assignStateLabels, clusterStates
 
 
-def analyze(samples: Sequence[float], sampleRate: int, pixels: Iterable[Sequence[int]] = (), *, useMl: bool = False) -> AnalysisResult:
+def analyze(samples: Sequence[float], sampleRate: int, pixels: Iterable[Sequence[int]] = (), *, useMl: bool = True) -> AnalysisResult:
     audio = analyzeAudio(samples, sampleRate)
     palette = extractPalette(pixels, useMl=useMl)
     states = clusterStates(audio, palette, useMl=useMl)
@@ -68,7 +68,7 @@ def buildMosaicFrame(image, *, mel: Sequence[float] = (), intensity: float = 1.0
 
 def generateMosaicMp4(image, audio, output: str, *, sampleRate: int | None = None,
                       fps: int = 30, size=(960, 540), rows: int = 4, columns: int = 6,
-                      useMl: bool = False, onProgress: Callable[[int, str], None] | None = None,
+                      useMl: bool = True, onProgress: Callable[[int, str], None] | None = None,
                       onAnalysis: Callable[[AudioFeatures, Palette, tuple[VisualState, ...], tuple[int, ...]], None] | None = None) -> str:
     """Genera un MP4 de mosaicos reactivos desde rutas o arrays de audio e imagen."""
     try:

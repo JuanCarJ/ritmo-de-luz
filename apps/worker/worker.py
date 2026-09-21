@@ -71,7 +71,7 @@ def process_job(job_dir: Path, output_dir: Path) -> None:
             image=job_dir / "input-image",
             audio=job_dir / "input-audio",
             output=str(output),
-            useMl=bool(job.get("mlEnabled", False)),
+            useMl=bool(job.get("mlEnabled", True)),
             onProgress=reportProgress,
             onAnalysis=saveAnalysis,
         )

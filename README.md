@@ -4,9 +4,9 @@
 
 Ritmo de Luz es la entrega del Midterm: una aplicación de investigación multimedia que analiza un audio,
 extrae energía y bandas de frecuencia, y transforma una imagen en una animación
-de mosaicos sincronizada con el sonido. La ruta base es determinista y cumple el
-sincronizador visual; como segunda capa opcional, K-Means agrupa estados acústicos
-y colores para enriquecer el ambiente visual. Se activa con `ENABLE_ML=true`.
+de mosaicos sincronizada con el sonido. K-Means forma parte del pipeline: agrupa
+las ventanas acústicas por energía, brillo y ataques, y usa esos estados para guiar
+los colores de la imagen. Se ejecuta por defecto con `ENABLE_ML=true`.
 
 ## Ver el resultado
 
