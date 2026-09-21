@@ -8,9 +8,9 @@ from collections.abc import Callable, Iterable, Sequence
 from pathlib import Path
 
 from .audio import analyzeAudio
-from .models import AnalysisResult, VisualFrame
+from .models import AnalysisResult, AudioFeatures, Palette, VisualFrame, VisualState
 from .palette import extractPalette
-from .states import clusterStates
+from .states import assignStateLabels, clusterStates
 
 
 def analyze(samples: Sequence[float], sampleRate: int, pixels: Iterable[Sequence[int]] = (), *, useMl: bool = False) -> AnalysisResult:
@@ -68,7 +68,8 @@ def buildMosaicFrame(image, *, mel: Sequence[float] = (), intensity: float = 1.0
 
 def generateMosaicMp4(image, audio, output: str, *, sampleRate: int | None = None,
                       fps: int = 30, size=(960, 540), rows: int = 4, columns: int = 6,
-                      useMl: bool = False, onProgress: Callable[[int, str], None] | None = None) -> str:
+                      useMl: bool = False, onProgress: Callable[[int, str], None] | None = None,
+                      onAnalysis: Callable[[AudioFeatures, Palette, tuple[VisualState, ...], tuple[int, ...]], None] | None = None) -> str:
     """Genera un MP4 de mosaicos reactivos desde rutas o arrays de audio e imagen."""
     try:
         import numpy as np
@@ -101,6 +102,9 @@ def generateMosaicMp4(image, audio, output: str, *, sampleRate: int | None = Non
     features = analyzeAudio(samples, sampleRate, melBands=12)
     palette = extractPalette(source.reshape(-1, 3)[::max(1, source.shape[0] * source.shape[1] // 2000)], useMl=useMl)
     states = clusterStates(features, palette, useMl=useMl)
+    stateLabels = assignStateLabels(features, count=len(states), useMl=useMl) if states else ()
+    if onAnalysis:
+        onAnalysis(features, palette, states, stateLabels)
     if onProgress:
         onProgress(35, "Definiendo estados visuales")
     duration = max(1, round(len(samples) / sampleRate * fps))
@@ -113,7 +117,8 @@ def generateMosaicMp4(image, audio, output: str, *, sampleRate: int | None = Non
         leftMel = features.mel_bands[leftPos] if features.mel_bands else (features.rms[leftPos],)
         rightMel = features.mel_bands[rightPos] if features.mel_bands else (features.rms[rightPos],)
         mel = tuple((1 - blend) * left + blend * right for left, right in zip(leftMel, rightMel))
-        state = states[min(len(states) - 1, round(exactPos))] if states else None
+        stateIndex = stateLabels[min(len(stateLabels) - 1, round(exactPos))] if stateLabels else 0
+        state = states[stateIndex] if states else None
         intensity = state.intensity if state else features.rms[leftPos]
         color = state.color if state else (255, 255, 255)
         frames.append(buildMosaicFrame(source, mel=mel, intensity=intensity, color=color,

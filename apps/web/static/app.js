@@ -51,6 +51,9 @@ function updatePipelineVisual(progress = 0, complete = false, mlEnabled = false)
 
 function updateGridImage(imageUrl) {
   if (!imageUrl) return;
+  const grid = document.querySelector('#pipeline-grid');
+  grid.classList.remove('has-preview');
+  grid.style.backgroundImage = 'none';
   document.querySelectorAll('#pipeline-grid span').forEach((tile, index) => {
     const column = index % 6;
     const row = Math.floor(index / 6);
@@ -116,6 +119,13 @@ async function loadAnalysis(analysisUrl) {
   document.querySelector('#kmeans-state').textContent = analysis.states?.length ? `${analysis.states.length} estados agrupados` : 'sin ML en esta ruta';
 }
 
+function setMappingPreview(mappingUrl) {
+  const grid = document.querySelector('#pipeline-grid');
+  if (!grid || !mappingUrl) return;
+  grid.style.backgroundImage = `url(${mappingUrl})`;
+  grid.classList.add('has-preview');
+}
+
 function selectDemo(demo) {
   selectedDemo = demo;
   demoVideo.src = demo.videoUrl;
@@ -123,6 +133,7 @@ function selectDemo(demo) {
   updatePipelineVisual(0, true, demo.mlEnabled !== false);
   updateGridImage(selectedImageUrl);
   loadAnalysis(demo.analysisUrl);
+  setMappingPreview(demo.mappingUrl);
   demoMeta.textContent = `Video preparado · ${demo.description || 'Audio público'} · ${demo.durationSeconds || 20} s · ${demo.mlEnabled !== false ? 'ML activado' : 'modo determinista'}`;
 }
 
@@ -224,12 +235,15 @@ async function pollJob(jobId, updateDemo = false) {
   feedback.textContent = `${job.status === 'completed' ? 'Listo' : 'Procesando'} · ${job.progress || 0}%`;
   if (job.status === 'completed' && job.outputUrl) {
     const link = `<a href="${job.outputUrl}" target="_blank" rel="noreferrer">Abrir MP4</a>`;
+    demoVideo.src = job.outputUrl;
+    demoVideo.load();
+    loadAnalysis(job.analysisUrl);
+    setMappingPreview(job.mappingUrl);
     if (updateDemo) {
-      demoVideo.src = job.outputUrl;
-      demoVideo.load();
       demoMeta.innerHTML = `Video generado con tu imagen · ${link}`;
     } else {
       feedback.innerHTML = `Composición lista. ${link}`;
+      demoMeta.innerHTML = `Video generado con tus archivos · ${link}`;
     }
     return;
   }

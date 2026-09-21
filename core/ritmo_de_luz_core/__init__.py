@@ -3,7 +3,7 @@ from .audio import analyzeAudio
 from .models import AnalysisResult, AudioFeatures, Palette, VisualFrame, VisualState
 from .palette import extractPalette
 from .pipeline import analyze, buildMosaicFrame, generateMosaicMp4, renderMp4
-from .states import clusterStates
+from .states import assignStateLabels, clusterStates
 
 __all__ = [
            "AnalysisResult",
@@ -13,6 +13,7 @@ __all__ = [
            "VisualState",
            "analyze",
            "analyzeAudio",
+           "assignStateLabels",
            "buildMosaicFrame",
            "clusterStates",
            "extractPalette",

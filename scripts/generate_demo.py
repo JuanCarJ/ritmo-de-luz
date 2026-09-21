@@ -72,7 +72,7 @@ def trimAudio(sourcePath: Path, targetPath: Path, seconds: int = 20) -> None:
 def main() -> int:
     from ritmo_de_luz_core.audio import analyzeAudio
     from ritmo_de_luz_core.palette import extractPalette
-    from ritmo_de_luz_core.pipeline import generateMosaicMp4
+    from ritmo_de_luz_core.pipeline import buildMosaicFrame, generateMosaicMp4
     from ritmo_de_luz_core.states import clusterStates
 
     imagePath = ensureImage()
@@ -108,6 +108,18 @@ def main() -> int:
         }), encoding="utf-8")
         outputPath = demoDir / f"ritmo-de-luz-{audioId}.mp4"
         generateMosaicMp4(image=imagePath, audio=trimmedPath, output=str(outputPath), useMl=True)
+        mappingPath = demoDir / f"ritmo-de-luz-{audioId}-mapping.png"
+        firstState = states[0] if states else None
+        mappingFrame = buildMosaicFrame(
+            np.asarray(Image.open(imagePath).convert("RGB")),
+            mel=features.mel_bands[0] if features.mel_bands else (features.rms[0],),
+            intensity=firstState.intensity if firstState else features.rms[0],
+            color=firstState.color if firstState else (255, 255, 255),
+            rows=4,
+            columns=6,
+            size=(960, 540),
+        )
+        Image.fromarray(mappingFrame).save(mappingPath)
         demos.append({
             "id": audioId,
             "name": audioId.replace("-", " ").title(),
@@ -115,6 +127,7 @@ def main() -> int:
             "audioUrl": f"/artifacts/demo/audio/{trimmedPath.name}",
             "analysisUrl": f"/artifacts/demo/analysis/{analysisPath.name}",
             "videoUrl": f"/artifacts/demo/{outputPath.name}",
+            "mappingUrl": f"/artifacts/demo/{mappingPath.name}",
             "description": description,
             "durationSeconds": 20,
             "mlEnabled": True,

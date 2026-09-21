@@ -13,6 +13,7 @@
       "audioUrl": "/artifacts/demo/audio/menu-loop.wav",
       "analysisUrl": "/artifacts/demo/analysis/menu-loop.json",
       "videoUrl": "/artifacts/demo/ritmo-de-luz-menu-loop.mp4",
+      "mappingUrl": "/artifacts/demo/ritmo-de-luz-menu-loop-mapping.png",
       "description": "Loop musical CC0 para ritmo y ataques.",
       "durationSeconds": 20,
       "mlEnabled": true
@@ -24,6 +25,7 @@
       "audioUrl": "/artifacts/demo/audio/peaceful-forest.wav",
       "analysisUrl": "/artifacts/demo/analysis/peaceful-forest.json",
       "videoUrl": "/artifacts/demo/ritmo-de-luz-peaceful-forest.mp4",
+      "mappingUrl": "/artifacts/demo/ritmo-de-luz-peaceful-forest-mapping.png",
       "description": "Textura ambiental CC0 para suavizado.",
       "durationSeconds": 20,
       "mlEnabled": true
@@ -35,6 +37,7 @@
       "audioUrl": "/artifacts/demo/audio/space-ranger.wav",
       "analysisUrl": "/artifacts/demo/analysis/space-ranger.json",
       "videoUrl": "/artifacts/demo/ritmo-de-luz-space-ranger.mp4",
+      "mappingUrl": "/artifacts/demo/ritmo-de-luz-space-ranger-mapping.png",
       "description": "Loop downtempo CC0 para cambios espectrales.",
       "durationSeconds": 20,
       "mlEnabled": true

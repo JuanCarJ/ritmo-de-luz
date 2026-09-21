@@ -7,17 +7,9 @@ from .models import AudioFeatures, Palette, VisualState
 def clusterStates(audio: AudioFeatures, palette: Palette, *, count: int = 4, seed: int = 7,
                   useMl: bool = True) -> tuple[VisualState, ...]:
     count = max(1, count)
-    n = len(audio.rms)
-    if not n: return ()
-    points = [[audio.rms[i], audio.spectral_centroid[i], audio.onset[i]] for i in range(n)]
-    labels = None
-    try:
-        if not useMl:
-            raise ImportError
-        from sklearn.cluster import KMeans
-        labels = KMeans(n_clusters=min(count, n), random_state=seed, n_init=10).fit_predict(points)
-    except (ImportError, ValueError):
-        labels = [min(count - 1, int(p[0] * count)) for p in points]
+    labels = assignStateLabels(audio, count=count, seed=seed, useMl=useMl)
+    if not labels: return ()
+    points = [[audio.rms[i], audio.spectral_centroid[i], audio.onset[i]] for i in range(len(labels))]
     result = []
     for state_id in range(max(labels) + 1):
         members = [i for i, label in enumerate(labels) if label == state_id]
@@ -26,3 +18,19 @@ def clusterStates(audio: AudioFeatures, palette: Palette, *, count: int = 4, see
         result.append(VisualState(f"state_{state_id}", max(0.0, min(1.0, avg[0])), color,
                                   {"centroid": avg[1], "onset": avg[2]}))
     return tuple(result)
+
+
+def assignStateLabels(audio: AudioFeatures, *, count: int = 4, seed: int = 7,
+                      useMl: bool = True) -> tuple[int, ...]:
+    count = max(1, count)
+    n = len(audio.rms)
+    if not n: return ()
+    points = [[audio.rms[i], audio.spectral_centroid[i], audio.onset[i]] for i in range(n)]
+    try:
+        if not useMl:
+            raise ImportError
+        from sklearn.cluster import KMeans
+        labels = KMeans(n_clusters=min(count, n), random_state=seed, n_init=10).fit_predict(points)
+    except (ImportError, ValueError):
+        labels = [min(count - 1, int(p[0] * count)) for p in points]
+    return tuple(int(label) for label in labels)
