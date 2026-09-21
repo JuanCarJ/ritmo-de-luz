@@ -42,18 +42,32 @@
           <strong>K-Means · extensión opcional</strong>
           <p>Agrupa ventanas de audio y colores en estados visuales. Está visible en la demo; los archivos propios siguen la ruta base.</p>
         </div>
-        <div class="visual-pipeline" aria-label="Visualización del pipeline">
-          <article class="visual-stage" data-visual-stage="1"><header><span>01</span><strong>Entrada</strong></header><div class="input-visual"><img id="pipeline-image" src="/artifacts/demo/images/aurora.png" alt="Imagen seleccionada" /><div id="pipeline-wave" class="wave-bars" aria-label="Forma de onda del audio"></div></div></article>
-          <article class="visual-stage" data-visual-stage="2"><header><span>02</span><strong>Frecuencias</strong></header><canvas id="pipeline-spectrogram" width="240" height="84" role="img" aria-label="Espectrograma STFT de 12 bandas mel"></canvas><div id="pipeline-bands" class="frequency-bars" aria-label="12 bandas mel"></div><small>STFT → 12 bandas mel · tiempo y frecuencia</small></article>
-          <article class="visual-stage" data-visual-stage="3"><header><span>03</span><strong>Normalización</strong></header><div class="normalization-visual"><div id="raw-bars" class="mini-bars"></div><div id="normalized-bars" class="mini-bars normalized"></div></div><small>RMS bruto → escala 0–1 + suavizado</small></article>
-          <article class="visual-stage" data-visual-stage="4"><header><span>04</span><strong>Mapeo 4 × 6</strong></header><div id="pipeline-grid" class="pipeline-grid" aria-label="24 mosaicos de imagen"></div><small>cada banda controla dos mosaicos</small></article>
-          <article class="visual-stage" data-visual-stage="5"><header><span>05</span><strong>MP4</strong></header><div class="output-visual"><span id="output-state">Esperando render</span><b>30 FPS</b></div><small>frames + audio sincronizado</small></article>
-          <article class="visual-stage" data-visual-stage="6"><header><span>06</span><strong>K-Means</strong></header><div id="kmeans-visual" class="cluster-visual" aria-label="Estados agrupados por K-Means"></div><small id="kmeans-state">extensión opcional</small></article>
+        <div class="visual-pipeline" aria-label="Proceso visual del audio hasta el video final">
+          <article class="visual-stage" data-visual-stage="1">
+            <header><span>01</span><strong>Entrada</strong><small>Imagen + WAV</small></header>
+            <div class="stage-body input-visual"><img id="pipeline-image" src="/artifacts/demo/images/aurora.png" alt="Imagen seleccionada" /><div class="signal-block"><span>Señal de audio</span><div id="pipeline-wave" class="wave-bars" aria-label="Forma de onda del audio"></div></div></div>
+          </article>
+          <article class="visual-stage" data-visual-stage="2">
+            <header><span>02</span><strong>Frecuencias</strong><small>STFT + 12 bandas mel</small></header>
+            <div class="stage-body frequency-visual"><canvas id="pipeline-spectrogram" width="720" height="220" role="img" aria-label="Espectrograma STFT de 12 bandas mel"></canvas><div class="signal-block"><span>Energía media por banda</span><div id="pipeline-bands" class="frequency-bars" aria-label="12 bandas mel"></div></div></div>
+          </article>
+          <article class="visual-stage" data-visual-stage="3">
+            <header><span>03</span><strong>Normalización</strong><small>RMS bruto → escala 0–1</small></header>
+            <div class="stage-body normalization-visual"><div class="metric-block"><span>Antes</span><div id="raw-bars" class="mini-bars"></div></div><div class="metric-block normalized"><span>Después + suavizado</span><div id="normalized-bars" class="mini-bars"></div></div></div>
+          </article>
+          <article class="visual-stage" data-visual-stage="4">
+            <header><span>04</span><strong>Mapeo 4 × 6</strong><small>12 bandas → 24 mosaicos</small></header>
+            <div class="stage-body mapping-visual"><div id="pipeline-grid" class="pipeline-grid" aria-label="24 mosaicos de imagen"></div><p>La energía modifica brillo, escala y color en cada región.</p></div>
+          </article>
+          <article class="visual-stage" data-visual-stage="5">
+            <header><span>05</span><strong>Resultado</strong><small>MP4 · 30 FPS · audio sincronizado</small></header>
+            <div class="stage-body output-stage"><video id="demo-video" controls preload="metadata" poster="/artifacts/demo/ritmo-de-luz-demo-poster.jpg"><source src="/artifacts/demo/ritmo-de-luz-menu-loop.mp4" type="video/mp4" />Tu navegador no puede reproducir este video.</video><div class="output-visual"><span id="output-state">Esperando render</span><b>30 FPS</b></div></div>
+          </article>
+          <article class="visual-stage" data-visual-stage="6">
+            <header><span>06</span><strong>K-Means</strong><small>Extensión opcional</small></header>
+            <div class="stage-body cluster-stage"><div id="kmeans-visual" class="cluster-visual" aria-label="Estados agrupados por K-Means"></div><p id="kmeans-state">Sin agrupar</p></div>
+          </article>
         </div>
-        <video id="demo-video" controls preload="metadata" poster="/artifacts/demo/ritmo-de-luz-demo-poster.jpg">
-          <source src="/artifacts/demo/ritmo-de-luz-menu-loop.mp4" type="video/mp4" />
-          Tu navegador no puede reproducir este video.
-        </video>
         <p id="demo-meta" class="hint">Cargando demo...</p>
       </section>
 
@@ -67,17 +81,6 @@
         <p id="render-feedback" class="feedback" role="status"></p>
       </section>
 
-      <section class="panel compact" aria-labelledby="method-title">
-        <div class="section-heading"><p class="step">03</p><h2 id="method-title">Evidencia del Midterm</h2><p>La demo permite comprobar cada requisito directamente.</p></div>
-        <ol class="process">
-          <li><strong>Entrada:</strong> imagen PNG/JPG + audio WAV.</li>
-          <li><strong>Análisis:</strong> STFT, 12 bandas mel, RMS, centroide y onsets.</li>
-          <li><strong>Normalización:</strong> escala 0–1, suavizado e interpolación temporal.</li>
-          <li><strong>Mapeo:</strong> 24 mosaicos; la energía modifica brillo, escala y color.</li>
-          <li><strong>Salida:</strong> MP4 a 30 FPS con audio sincronizado.</li>
-          <li><strong>Extensión:</strong> K-Means agrupa estados acústicos y colores.</li>
-        </ol>
-      </section>
     </main>
     <footer class="footer">Ritmo de Luz · laboratorio audiovisual</footer>
     <script src="/static/app.js" defer></script>

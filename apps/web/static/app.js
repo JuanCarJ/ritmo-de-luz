@@ -95,11 +95,14 @@ async function loadAnalysis(analysisUrl) {
     bar.style.height = `${18 + value * 80}%`;
   });
   document.querySelectorAll('#raw-bars span').forEach((bar, index) => {
-    const rawValue = analysis.rawRms?.[index % Math.max(1, analysis.rawRms.length)] || 0;
-    bar.style.height = `${18 + rawValue * 80}%`;
+    const rawValues = analysis.rawRms || [];
+    const sourceIndex = Math.floor(index * rawValues.length / Math.max(1, document.querySelectorAll('#raw-bars span').length));
+    const rawMax = Math.max(...rawValues, 1e-9);
+    bar.style.height = `${18 + ((rawValues[sourceIndex] || 0) / rawMax) * 80}%`;
   });
   document.querySelectorAll('#normalized-bars span').forEach((bar, index) => {
-    const normalizedValue = rms[index % Math.max(1, rms.length)] || 0;
+    const sourceIndex = Math.floor(index * rms.length / Math.max(1, document.querySelectorAll('#normalized-bars span').length));
+    const normalizedValue = rms[sourceIndex] || 0;
     bar.style.height = `${18 + normalizedValue * 80}%`;
   });
   const clusterVisual = document.querySelector('#kmeans-visual');
