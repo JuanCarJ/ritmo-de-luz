@@ -50,7 +50,7 @@
         <div class="visual-pipeline" aria-label="Proceso visual del audio hasta el video final">
           <article class="visual-stage" data-visual-stage="1">
             <header><span>01</span><strong>Entrada</strong><small>Imagen + WAV</small></header>
-            <div class="stage-body input-visual"><img id="pipeline-image" src="/artifacts/demo/images/aurora.png" alt="Imagen seleccionada" /><div class="signal-block"><span>Señal de audio · amplitud en el tiempo</span><div class="waveform-chart"><canvas id="pipeline-waveform" width="720" height="150" role="img" aria-label="Forma de onda real del audio"></canvas><span id="waveform-cursor" aria-hidden="true"></span></div><output id="input-readout" class="metric-readout">Esperando archivo de audio e imagen</output></div></div>
+            <div class="stage-body input-visual"><img id="pipeline-image" src="/artifacts/demo/images/aurora.png" alt="Imagen seleccionada" /><div class="signal-block"><span>Señal de audio · amplitud en el tiempo</span><div class="waveform-chart"><canvas id="pipeline-waveform" width="720" height="150" role="img" aria-label="Forma de onda real del audio"></canvas><span id="waveform-cursor" aria-hidden="true"></span></div><output id="input-readout" class="metric-readout">Esperando archivo de audio e imagen</output><div id="image-palette" class="image-palette" aria-label="Colores extraídos de la imagen"></div></div></div>
           </article>
           <article class="visual-stage" data-visual-stage="2">
             <header><span>02</span><strong>Frecuencias</strong><small>STFT + 12 bandas mel</small></header>

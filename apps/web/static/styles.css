@@ -60,6 +60,8 @@ video { display:block; width:100%; margin-top:20px; background:#10151a; border-r
 .waveform-chart,.normalization-chart { position:relative; }
 .waveform-chart canvas,.normalization-chart canvas { display:block; width:100%; height:auto; min-height:120px; border-radius:8px; }
 .waveform-chart span,.normalization-chart span { position:absolute; z-index:2; top:0; bottom:0; left:0; width:2px; background:#fff; box-shadow:0 0 0 1px rgba(23,32,42,.55); pointer-events:none; transition:left .06s linear; }
+.image-palette { display:flex; gap:5px; height:18px; }
+.image-palette span { flex:1; min-width:22px; border-radius:3px; box-shadow:inset 0 0 0 1px rgba(23,32,42,.16); }
 .wave-bars,.frequency-bars,.mini-bars { display:flex; align-items:end; gap:3px; height:64px; padding:6px 0 0; }
 .wave-bars span,.frequency-bars span,.mini-bars span { flex:1; min-width:2px; border-radius:2px 2px 0 0; background:var(--accent); }
 .frequency-bars span { background:#4b9c90; }

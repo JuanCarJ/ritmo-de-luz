@@ -205,6 +205,16 @@ async function loadAnalysis(analysisUrl) {
   const duration = Number(analysis.times?.at(-1) || 0);
   const paletteCount = analysis.palette?.colors?.length || 0;
   if (inputReadout) inputReadout.textContent = `WAV · ${duration.toFixed(2)} s · ${melBands.length} ventanas · imagen ${image?.naturalWidth || '—'} × ${image?.naturalHeight || '—'} px · ${paletteCount} colores extraídos`;
+  const palette = document.querySelector('#image-palette');
+  if (palette) {
+    palette.replaceChildren();
+    (analysis.palette?.colors || []).forEach((color, index) => {
+      const swatch = document.createElement('span');
+      swatch.title = `Color ${index + 1}: rgb(${color.join(', ')})`;
+      swatch.style.background = `rgb(${color.join(',')})`;
+      palette.appendChild(swatch);
+    });
+  }
   renderAnalysisFrame(0);
   const clusterVisual = document.querySelector('#kmeans-visual');
   clusterVisual.replaceChildren();
