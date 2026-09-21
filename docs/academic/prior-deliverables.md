@@ -10,7 +10,7 @@ El trabajo anterior resolvió dos casos independientes: conteo de personas con
 YOLOX y detección/OCR de placas con `platerec`. Esos modelos reciben una imagen
 para detectar objetos o texto. Ritmo de Luz recibe una imagen como superficie
 visual, no como objeto que deba reconocerse; por eso YOLO y OCR quedan fuera del
-pipeline. La decisión conserva el alcance del Proyecto 2 del enunciado y evita
+pipeline. La decisión conserva el alcance del sincronizador del Midterm y evita
 añadir una técnica que no mejora la sincronización.
 
 ## Entregable 2: procesamiento de audio
@@ -35,4 +35,3 @@ relleno: cada visual se alimenta del archivo de análisis generado por `core/`.
 | Filtrado/ataques | Centroide y onset para describir cambios | Análisis del core y estados |
 | Procesamiento de imagen | Imagen como fuente de píxeles y mosaico | Entrada y Mapeo 4 × 6 |
 | Modelos YOLO/OCR | No se incluyen | Fuera del alcance del sincronizador |
-

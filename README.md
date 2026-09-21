@@ -2,7 +2,7 @@
 
 **El sonido se convierte en luz.**
 
-Ritmo de Luz es una aplicación de investigación multimedia que analiza un audio,
+Ritmo de Luz es la entrega del Midterm: una aplicación de investigación multimedia que analiza un audio,
 extrae energía y bandas de frecuencia, y transforma una imagen en una animación
 de mosaicos sincronizada con el sonido. La ruta base es determinista y cumple el
 sincronizador visual; como segunda capa opcional, K-Means agrupa estados acústicos

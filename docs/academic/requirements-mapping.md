@@ -1,5 +1,7 @@
 # Trazabilidad académica
 
+## Evidencia técnica del Midterm
+
 | Requisito | Implementación | Evidencia |
 |---|---|---|
 | 6–12 bandas de frecuencia | 12 bandas normalizadas en `core/ritmo_de_luz_core/audio.py` | MP4 y prueba del core |
@@ -12,7 +14,11 @@
 La lógica académica es independiente de FastAPI, Docker y Caddy. La aplicación
 solo orquesta el mismo pipeline reproducible.
 
-## Lectura de la rúbrica del Proyecto 2
+## Lectura de la rúbrica del Midterm
+
+La solución implementa la alternativa de sincronización imagen–audio del
+Midterm. El Entregable 2 anterior se usa como antecedente técnico, pero no se
+presenta como el proyecto actual.
 
 | Criterio | Cómo se demuestra aquí | Estado |
 |---|---|---|

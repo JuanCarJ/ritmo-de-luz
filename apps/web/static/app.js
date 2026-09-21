@@ -179,6 +179,7 @@ async function loadDemo() {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'image-option';
+      button.setAttribute('aria-pressed', 'false');
       button.innerHTML = `<img src="${image.imageUrl}" alt="${image.name}" /><span>${image.name}</span>`;
       button.addEventListener('click', () => {
         selectedImageUrl = image.imageUrl;
@@ -186,8 +187,12 @@ async function loadDemo() {
         updateGridImage(image.imageUrl);
         updatePipelineVisual(0, false);
         demoMeta.textContent = `${image.name} seleccionada · pulsa “Generar con esta imagen”`;
-        document.querySelectorAll('.image-option').forEach((item) => item.classList.remove('selected'));
+        document.querySelectorAll('.image-option').forEach((item) => {
+          item.classList.remove('selected');
+          item.setAttribute('aria-pressed', 'false');
+        });
         button.classList.add('selected');
+        button.setAttribute('aria-pressed', 'true');
         demoImage.value = '';
       });
       demoImageGrid.appendChild(button);
@@ -241,7 +246,10 @@ demoImage.addEventListener('change', () => {
   updateGridImage(document.querySelector('#pipeline-image').src);
   updatePipelineVisual(0, false);
   demoMeta.textContent = 'Imagen cargada · pulsa “Generar con esta imagen”';
-  document.querySelectorAll('.image-option').forEach((item) => item.classList.remove('selected'));
+  document.querySelectorAll('.image-option').forEach((item) => {
+    item.classList.remove('selected');
+    item.setAttribute('aria-pressed', 'false');
+  });
 });
 
 document.querySelector('#render-form').addEventListener('submit', async (event) => {

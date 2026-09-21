@@ -12,9 +12,10 @@
     <header class="topbar"><a class="brand" href="/">Ritmo de Luz</a><span class="status-pill">demo local</span></header>
     <main class="page">
       <section class="intro" aria-labelledby="page-title">
-        <p class="eyebrow">Proyecto audiovisual</p>
+        <p class="eyebrow">Midterm · sincronizador imagen–audio</p>
         <h1 id="page-title">El sonido se convierte en luz.</h1>
-        <p>Hay dos formas de probarlo: reproduce una demo ya preparada o genera un video nuevo con tu imagen y tu audio.</p>
+        <p>Reproduce una demo con análisis real o genera un video nuevo con tu imagen y tu audio.</p>
+        <p class="criteria-line">Evidencia: STFT · 12 bandas mel · RMS y onsets · normalización · mosaico 4 × 6 · 30 FPS · K-Means</p>
       </section>
 
       <section class="panel" aria-labelledby="demo-title">
@@ -38,8 +39,8 @@
           <p id="render-phase" class="hint">En cola</p>
         </div>
         <div class="technical-note">
-          <strong>Extensión opcional</strong>
-          <p>K-Means agrupa estados acústicos y colores después de la ruta base. Se activa con <code>ENABLE_ML=true</code>; el render local nuevo usa la ruta determinista por defecto.</p>
+          <strong>K-Means · extensión opcional</strong>
+          <p>Agrupa ventanas de audio y colores en estados visuales. Está visible en la demo; los archivos propios siguen la ruta base.</p>
         </div>
         <div class="visual-pipeline" aria-label="Visualización del pipeline">
           <article class="visual-stage" data-visual-stage="1"><header><span>01</span><strong>Entrada</strong></header><div class="input-visual"><img id="pipeline-image" src="/artifacts/demo/images/aurora.png" alt="Imagen seleccionada" /><div id="pipeline-wave" class="wave-bars" aria-label="Forma de onda del audio"></div></div></article>
@@ -67,14 +68,14 @@
       </section>
 
       <section class="panel compact" aria-labelledby="method-title">
-        <div class="section-heading"><p class="step">03</p><h2 id="method-title">Qué hace el sistema</h2><p>El audio no se muestra aislado: controla el aspecto y el movimiento del video.</p></div>
+        <div class="section-heading"><p class="step">03</p><h2 id="method-title">Evidencia del Midterm</h2><p>La demo permite comprobar cada requisito directamente.</p></div>
         <ol class="process">
-          <li><strong>Entrada:</strong> recibe una imagen PNG/JPG y un audio WAV de 20 a 40 segundos.</li>
-          <li><strong>Base — análisis:</strong> STFT conserva la evolución temporal; las 12 bandas mel resumen el espectro; RMS, centroide y onsets describen energía, brillo y ataques.</li>
-          <li><strong>Base — normalización:</strong> convierte medidas heterogéneas a 0–1, suaviza la envolvente e interpola entre ventanas.</li>
-          <li><strong>Base — composición:</strong> divide la imagen en una cuadrícula 4 × 6 (24 mosaicos); cada una de las 12 bandas se reutiliza en dos regiones para modular brillo, escala, transparencia y color.</li>
-          <li><strong>Base — salida:</strong> exporta un MP4 sincronizado y devuelve un enlace para abrirlo.</li>
-          <li><strong>Extensión opcional — K-Means:</strong> agrupa ventanas acústicas y colores para añadir estados visuales. Se activa con <code>ENABLE_ML=true</code>; si no, se usa el resultado determinista base.</li>
+          <li><strong>Entrada:</strong> imagen PNG/JPG + audio WAV.</li>
+          <li><strong>Análisis:</strong> STFT, 12 bandas mel, RMS, centroide y onsets.</li>
+          <li><strong>Normalización:</strong> escala 0–1, suavizado e interpolación temporal.</li>
+          <li><strong>Mapeo:</strong> 24 mosaicos; la energía modifica brillo, escala y color.</li>
+          <li><strong>Salida:</strong> MP4 a 30 FPS con audio sincronizado.</li>
+          <li><strong>Extensión:</strong> K-Means agrupa estados acústicos y colores.</li>
         </ol>
       </section>
     </main>
