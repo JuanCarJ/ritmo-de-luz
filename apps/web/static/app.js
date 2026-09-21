@@ -239,7 +239,7 @@ function drawStates() {
     const title = document.createElement('strong');
     title.textContent = state.name;
     const detail = document.createElement('small');
-    detail.textContent = `${describe(state)}. ${Math.round(state.share * 100)} % del tramo.`;
+    detail.textContent = `${describe(state)}. ${Math.round(state.share * 100)} % del audio analizado.`;
     card.append(swatch, title, detail);
     return card;
   }));

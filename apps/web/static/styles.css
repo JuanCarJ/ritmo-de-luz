@@ -136,6 +136,11 @@ figcaption { margin-top: 8px; color: var(--muted); font-size: 12.5px; }
 .spec { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; }
 .spec-y { display: flex; flex-direction: column; justify-content: space-between; font-size: 11px; color: var(--faint); text-align: right; }
 .states { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.kmeans-explain { padding: 12px 14px; border-left: 2px solid var(--amber); background: var(--raise); color: var(--muted); font-size: 13px; line-height: 1.45; }
+.kmeans-explain p { margin: 0 0 8px; }
+.kmeans-explain p b, .kmeans-explain li b { color: var(--ink); }
+.kmeans-explain ol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 20px; margin: 0; padding-left: 18px; }
+.states-label { margin: 18px 0 8px; color: var(--muted); font-size: 12.5px; font-weight: 600; }
 .states article { padding: 12px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); transition: border-color .2s; }
 .states article.on { border-color: var(--ink); }
 .states i { display: block; height: 8px; border-radius: 2px; margin-bottom: 10px; }
@@ -178,6 +183,7 @@ figcaption { margin-top: 8px; color: var(--muted); font-size: 12.5px; }
   .demos { grid-template-columns: 1fr 1fr; }
   .viz.two, .rules { grid-template-columns: 1fr; }
   .states { grid-template-columns: 1fr 1fr; }
+  .kmeans-explain ol { grid-template-columns: 1fr; gap: 4px; }
   .sound { bottom: 12px; padding: 8px 14px; font-size: 14px; }
   .steps-head h2 { font-size: 20px; }
 }

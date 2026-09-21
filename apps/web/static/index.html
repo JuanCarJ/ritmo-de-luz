@@ -207,12 +207,21 @@
       </article>
 
       <article class="step" id="s7">
-        <header><b>7</b><div><small>Agrupación</small><h3>Estados del audio con K-Means</h3></div></header>
+        <header><b>7</b><div><small>Agrupación</small><h3>Perfiles del audio con K-Means</h3></div></header>
         <div class="viz">
+          <div class="kmeans-explain" aria-label="Cómo se obtienen los perfiles">
+            <p><b>¿Qué hace K-Means?</b> Agrupa las ventanas del audio que tienen características parecidas.</p>
+            <ol>
+              <li><b>Describe:</b> energía, brillo y ataques.</li>
+              <li><b>Agrupa:</b> encuentra cuatro perfiles sin umbrales fijos.</li>
+              <li><b>Colorea:</b> cada perfil usa un color de la paleta extraída.</li>
+            </ol>
+          </div>
           <figure>
             <div class="plot"><canvas id="c-states" height="36"></canvas><i class="head"></i></div>
-            <figcaption>Estado en cada instante del tramo.</figcaption>
+            <figcaption>Perfil asignado a cada ventana del tramo, de izquierda a derecha.</figcaption>
           </figure>
+          <p class="states-label">Perfiles encontrados en este audio</p>
           <div id="states" class="states"></div>
         </div>
       </article>
