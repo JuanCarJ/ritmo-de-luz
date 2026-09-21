@@ -21,7 +21,7 @@ OUTPUTS_DIR = RUNTIME_DIR / "outputs"
 MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_BYTES", "25000000"))
 MIN_AUDIO_SECONDS = int(os.getenv("MIN_AUDIO_SECONDS", "20"))
 MAX_AUDIO_SECONDS = int(os.getenv("MAX_AUDIO_SECONDS", "40"))
-ENABLE_ML = os.getenv("ENABLE_ML", "false").lower() == "true"
+ENABLE_ML = os.getenv("ENABLE_ML", "true").lower() == "true"
 EMBEDDED_WORKER = os.getenv("EMBEDDED_WORKER", "true").lower() == "true"
 
 for directory in (JOBS_DIR, OUTPUTS_DIR):
