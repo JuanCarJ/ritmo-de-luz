@@ -2,6 +2,7 @@ const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
 const video = $('#video');
 const preview = $('#s8-video');
+const previewSound = $('#s8-sound');
 const sound = $('#sound');
 const toggle = $('#toggle');
 const bars = $('#bars');
@@ -338,12 +339,13 @@ async function loadDemos() {
 }
 
 // ---------- Reproductor ----------
-function playWithSound() {
+function playWithSound(reset = false) {
   video.muted = false;
-  video.currentTime = 0;
+  if (reset) video.currentTime = 0;
   video.play();
 }
-sound.addEventListener('click', playWithSound);
+sound.addEventListener('click', () => playWithSound(true));
+previewSound.addEventListener('click', () => playWithSound());
 video.addEventListener('volumechange', () => { sound.hidden = !video.muted; });
 video.addEventListener('play', () => { toggle.classList.remove('paused'); toggle.setAttribute('aria-label', 'Pausar'); });
 video.addEventListener('pause', () => { toggle.classList.add('paused'); toggle.setAttribute('aria-label', 'Reproducir'); });
