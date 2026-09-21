@@ -1,8 +1,6 @@
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
 const video = $('#video');
-const preview = $('#s8-video');
-const previewSound = $('#s8-sound');
 const sound = $('#sound');
 const toggle = $('#toggle');
 const bars = $('#bars');
@@ -38,7 +36,6 @@ function numberedGrid(container) {
 function buildStatic() {
   for (let index = 0; index < BANDS; index += 1) bars.appendChild(document.createElement('span'));
   numberedGrid(map);
-  numberedGrid($('#s8-grid'));
   $$('[data-band]').forEach((select) => {
     for (let index = 0; index < BANDS; index += 1) select.add(new Option(String(index + 1), String(index)));
     select.addEventListener('change', () => {
@@ -70,7 +67,6 @@ function paint() {
   dot.style.boxShadow = flash > 0.2 ? `0 0 ${Math.round(22 * flash)}px var(--state)` : 'none';
   setState(analysis.frames.state[index]);
   const progress = Math.min(1, video.currentTime / analysis.durationSeconds);
-  if (Math.abs(preview.currentTime - video.currentTime) > 0.08) preview.currentTime = video.currentTime;
   $('#clock').textContent = `${time(video.currentTime)} / ${time(analysis.durationSeconds)}`;
   $('#scrub-fill').style.width = `${progress * 100}%`;
   $$('.plot .head').forEach((head) => { head.style.left = `${progress * 100}%`; });
@@ -280,13 +276,6 @@ async function show(entry) {
   current = { entry, analysis };
   video.poster = entry.posterUrl || '';
   video.src = entry.videoUrl;
-  preview.pause();
-  preview.src = entry.videoUrl;
-  preview.addEventListener('loadedmetadata', () => {
-    preview.currentTime = video.currentTime;
-    if (!video.paused) preview.play().catch(() => {});
-  }, { once: true });
-  preview.load();
   video.play().catch(() => toggle.classList.add('paused'));
   map.style.backgroundImage = `url("${entry.posterUrl}")`;
   const edges = analysis.bandEdgesHz;
@@ -345,18 +334,10 @@ function playWithSound(reset = false) {
   video.play();
 }
 sound.addEventListener('click', () => playWithSound(true));
-previewSound.addEventListener('click', () => playWithSound());
 video.addEventListener('volumechange', () => { sound.hidden = !video.muted; });
 video.addEventListener('play', () => { toggle.classList.remove('paused'); toggle.setAttribute('aria-label', 'Pausar'); });
 video.addEventListener('pause', () => { toggle.classList.add('paused'); toggle.setAttribute('aria-label', 'Reproducir'); });
 toggle.addEventListener('click', () => (video.paused ? video.play() : video.pause()));
-video.addEventListener('play', () => { if (preview.paused) preview.play().catch(() => {}); });
-video.addEventListener('pause', () => { if (!preview.paused) preview.pause(); });
-preview.addEventListener('play', () => { if (video.paused) video.play().catch(() => {}); });
-preview.addEventListener('pause', () => { if (!video.paused) video.pause(); });
-preview.addEventListener('timeupdate', () => {
-  if (Math.abs(video.currentTime - preview.currentTime) > 0.08) video.currentTime = preview.currentTime;
-});
 function seekFrom(element, event) {
   if (!current) return;
   const box = element.getBoundingClientRect();
