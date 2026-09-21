@@ -10,6 +10,9 @@ const renderPhase = document.querySelector('#render-phase');
 let selectedDemo = null;
 let selectedImageUrl = null;
 let activeAnalysis = null;
+let analysisAnimationId = null;
+let analysisAnimationStart = 0;
+let analysisAnimationOffset = 0;
 
 const analysisControls = document.querySelector('#analysis-controls');
 const analysisPlay = document.querySelector('#analysis-play');
@@ -89,6 +92,10 @@ function renderAnalysisFrame(index = 0) {
   document.querySelectorAll('#pipeline-bands span').forEach((bar, bandIndex) => {
     bar.style.height = `${18 + Number(frame[bandIndex] || 0) * 80}%`;
   });
+  const peakValue = Math.max(...frame.map((value) => Number(value) || 0), 0);
+  const peakBand = frame.indexOf(peakValue);
+  const melReadout = document.querySelector('#mel-readout');
+  if (melReadout) melReadout.textContent = `Pico de energía: banda ${peakBand + 1} · ${peakValue.toFixed(2)}`;
   const cursor = document.querySelector('#frequency-cursor');
   if (cursor) cursor.style.left = `${progress * 100}%`;
   const waveformCursor = document.querySelector('#waveform-cursor');
@@ -109,6 +116,35 @@ function syncAnalysisToVideo() {
   let frameIndex = 0;
   while (frameIndex < times.length - 1 && times[frameIndex + 1] <= demoVideo.currentTime) frameIndex += 1;
   renderAnalysisFrame(frameIndex);
+}
+
+function stopAnalysisPlayback() {
+  if (analysisAnimationId !== null) cancelAnimationFrame(analysisAnimationId);
+  analysisAnimationId = null;
+}
+
+function startAnalysisPlayback() {
+  if (!activeAnalysis?.times?.length) return;
+  stopAnalysisPlayback();
+  const duration = Number(activeAnalysis.times.at(-1) || 0);
+  analysisAnimationStart = performance.now() - analysisAnimationOffset * 1000;
+  const tick = (now) => {
+    const elapsed = Math.min(duration, (now - analysisAnimationStart) / 1000);
+    analysisAnimationOffset = elapsed;
+    let frameIndex = 0;
+    while (frameIndex < activeAnalysis.times.length - 1 && activeAnalysis.times[frameIndex + 1] <= elapsed) frameIndex += 1;
+    renderAnalysisFrame(frameIndex);
+    if (Number.isFinite(demoVideo.duration)) demoVideo.currentTime = elapsed;
+    if (elapsed < duration) {
+      analysisAnimationId = requestAnimationFrame(tick);
+    } else {
+      analysisAnimationId = null;
+      analysisAnimationOffset = 0;
+      if (analysisPlay) analysisPlay.textContent = 'Reproducir proceso';
+    }
+  };
+  analysisPlay.textContent = 'Pausar proceso';
+  analysisAnimationId = requestAnimationFrame(tick);
 }
 
 function buildPipelineVisuals() {
@@ -239,22 +275,29 @@ demoVideo.addEventListener('play', () => {
   if (analysisPlay) analysisPlay.textContent = 'Pausar proceso';
 });
 demoVideo.addEventListener('pause', () => {
-  if (analysisPlay) analysisPlay.textContent = 'Reproducir proceso';
+  if (analysisAnimationId === null && analysisPlay) analysisPlay.textContent = 'Reproducir proceso';
 });
 demoVideo.addEventListener('ended', () => {
+  stopAnalysisPlayback();
   if (analysisPlay) analysisPlay.textContent = 'Reproducir proceso';
 });
 analysisTime?.addEventListener('input', () => {
   const frameIndex = Number(analysisTime.value);
   renderAnalysisFrame(frameIndex);
   const time = Number(activeAnalysis?.times?.[frameIndex] || 0);
+  analysisAnimationOffset = time;
+  stopAnalysisPlayback();
+  if (analysisPlay) analysisPlay.textContent = 'Reproducir proceso';
   if (Number.isFinite(time)) demoVideo.currentTime = time;
 });
 analysisPlay?.addEventListener('click', () => {
-  if (demoVideo.paused) {
+  if (analysisAnimationId === null) {
+    startAnalysisPlayback();
     demoVideo.play().catch(() => {});
   } else {
+    stopAnalysisPlayback();
     demoVideo.pause();
+    if (analysisPlay) analysisPlay.textContent = 'Reproducir proceso';
   }
 });
 

@@ -68,7 +68,7 @@ video { display:block; width:100%; margin-top:20px; background:#10151a; border-r
 .frequency-visual { display:grid; gap:14px; }
 .spectrogram-wrap { position:relative; }
 .spectrogram-wrap canvas { position:relative; z-index:1; }
-#frequency-cursor { position:absolute; z-index:2; top:0; bottom:0; left:0; width:2px; background:#fff; box-shadow:0 0 0 1px rgba(23,32,42,.55); pointer-events:none; transition:left .06s linear; }
+#frequency-cursor { position:absolute; z-index:2; top:0; bottom:0; left:0; width:7px; background:#ffd166; box-shadow:0 0 0 1px rgba(23,32,42,.7), 0 0 14px rgba(255,209,102,.9); pointer-events:none; transition:left .06s linear; }
 .visual-stage canvas { display:block; width:100%; height:auto; min-height:180px; border-radius:8px; image-rendering:auto; }
 .normalization-visual { display:grid; gap:18px; }
 .chart-legend { display:flex; flex-wrap:wrap; gap:14px; color:var(--muted); font-size:.78rem; }
