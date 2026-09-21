@@ -1,63 +1,83 @@
 {
   "name": "Ritmo de Luz",
   "bands": 12,
-  "mlEnabled": true,
   "fps": 30,
-  "durationSeconds": 20,
-  "videoUrl": "/artifacts/demo/ritmo-de-luz-menu-loop.mp4",
+  "credits": "Imágenes: vultilion y danielbuechele (Flickr, CC BY 2.0); Stephan Sprinz (Wikimedia Commons, CC BY 4.0); NASA/ESA/Hubble y NOAA Fisheries (dominio público). Música: Akikazer, Samza, Nostromo, Joth y cynicmusic (OpenGameArt, CC0).",
   "demos": [
     {
       "id": "menu-loop",
-      "name": "Menu Loop",
-      "audio": "menu-loop.wav",
+      "title": "Menu Loop",
+      "mood": "Loop rítmico con golpes marcados.",
+      "imageName": "dalia.jpg",
       "audioUrl": "/artifacts/demo/audio/menu-loop.wav",
+      "imageUrl": "/artifacts/demo/images/dalia.jpg",
+      "videoUrl": "/artifacts/demo/menu-loop.mp4",
+      "posterUrl": "/artifacts/demo/menu-loop.jpg",
       "analysisUrl": "/artifacts/demo/analysis/menu-loop.json",
-      "videoUrl": "/artifacts/demo/ritmo-de-luz-menu-loop.mp4",
-      "mappingUrl": "/artifacts/demo/ritmo-de-luz-menu-loop-mapping.png",
-      "description": "Loop musical CC0 para ritmo y ataques.",
-      "durationSeconds": 20,
-      "mlEnabled": true
+      "tempo": 129.2,
+      "durationSeconds": 20.0,
+      "segmentStart": 2.0,
+      "syncScore": 0.915
     },
     {
-      "id": "peaceful-forest",
-      "name": "Peaceful Forest",
-      "audio": "peaceful-forest.wav",
-      "audioUrl": "/artifacts/demo/audio/peaceful-forest.wav",
-      "analysisUrl": "/artifacts/demo/analysis/peaceful-forest.json",
-      "videoUrl": "/artifacts/demo/ritmo-de-luz-peaceful-forest.mp4",
-      "mappingUrl": "/artifacts/demo/ritmo-de-luz-peaceful-forest-mapping.png",
-      "description": "Textura ambiental CC0 para suavizado.",
-      "durationSeconds": 20,
-      "mlEnabled": true
+      "id": "cyberpunk",
+      "title": "Cyberpunk Moonlight Sonata",
+      "mood": "Electrónica: bombo constante.",
+      "imageName": "aurora.jpg",
+      "audioUrl": "/artifacts/demo/audio/cyberpunk.wav",
+      "imageUrl": "/artifacts/demo/images/aurora.jpg",
+      "videoUrl": "/artifacts/demo/cyberpunk.mp4",
+      "posterUrl": "/artifacts/demo/cyberpunk.jpg",
+      "analysisUrl": "/artifacts/demo/analysis/cyberpunk.json",
+      "tempo": 107.7,
+      "durationSeconds": 20.0,
+      "segmentStart": 10.0,
+      "syncScore": 0.922
+    },
+    {
+      "id": "battle-theme",
+      "title": "Battle Theme A",
+      "mood": "Orquesta: cuerdas y metales.",
+      "imageName": "carina.jpg",
+      "audioUrl": "/artifacts/demo/audio/battle-theme.wav",
+      "imageUrl": "/artifacts/demo/images/carina.jpg",
+      "videoUrl": "/artifacts/demo/battle-theme.mp4",
+      "posterUrl": "/artifacts/demo/battle-theme.jpg",
+      "analysisUrl": "/artifacts/demo/analysis/battle-theme.json",
+      "tempo": 143.6,
+      "durationSeconds": 20.0,
+      "segmentStart": 10.0,
+      "syncScore": 0.869
     },
     {
       "id": "space-ranger",
-      "name": "Space Ranger",
-      "audio": "space-ranger.wav",
+      "title": "Space Ranger",
+      "mood": "Downtempo con bajo profundo.",
+      "imageName": "pagoda.jpg",
       "audioUrl": "/artifacts/demo/audio/space-ranger.wav",
+      "imageUrl": "/artifacts/demo/images/pagoda.jpg",
+      "videoUrl": "/artifacts/demo/space-ranger.mp4",
+      "posterUrl": "/artifacts/demo/space-ranger.jpg",
       "analysisUrl": "/artifacts/demo/analysis/space-ranger.json",
-      "videoUrl": "/artifacts/demo/ritmo-de-luz-space-ranger.mp4",
-      "mappingUrl": "/artifacts/demo/ritmo-de-luz-space-ranger-mapping.png",
-      "description": "Loop downtempo CC0 para cambios espectrales.",
-      "durationSeconds": 20,
-      "mlEnabled": true
-    }
-  ],
-  "images": [
-    {
-      "id": "aurora",
-      "name": "Aurora",
-      "imageUrl": "/artifacts/demo/images/aurora.png"
+      "tempo": 161.5,
+      "durationSeconds": 20.0,
+      "segmentStart": 7.5,
+      "syncScore": 0.901
     },
     {
-      "id": "pulso",
-      "name": "Pulso",
-      "imageUrl": "/artifacts/demo/images/pulso.png"
-    },
-    {
-      "id": "cosmos",
-      "name": "Cosmos",
-      "imageUrl": "/artifacts/demo/images/cosmos.png"
+      "id": "peaceful-forest",
+      "title": "Peaceful Forest",
+      "mood": "Ambiental: casi sin golpes.",
+      "imageName": "coral.png",
+      "audioUrl": "/artifacts/demo/audio/peaceful-forest.wav",
+      "imageUrl": "/artifacts/demo/images/coral.png",
+      "videoUrl": "/artifacts/demo/peaceful-forest.mp4",
+      "posterUrl": "/artifacts/demo/peaceful-forest.jpg",
+      "analysisUrl": "/artifacts/demo/analysis/peaceful-forest.json",
+      "tempo": 126.0,
+      "durationSeconds": 20.0,
+      "segmentStart": 5.5,
+      "syncScore": 0.536
     }
   ]
 }

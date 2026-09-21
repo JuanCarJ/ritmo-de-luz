@@ -1,18 +1,19 @@
 # `ritmo_de_luz_core`
 
-Paquete Python puro para convertir una señal de audio y una colección de píxeles en
-features, paleta, estados visuales y frames tipados. No depende de FastAPI, Docker,
-Caddy ni de rutas de servidor.
-
-`numpy` es necesario para el análisis STFT; `scikit-learn` acelera KMeans pero tiene
-fallback determinista; `imageio` + ffmpeg son opcionales para `renderMp4`.
+Paquete Python sin dependencias web. Recibe una imagen y un audio y devuelve un MP4 más el
+análisis que usa la interfaz.
 
 ```python
-from ritmo_de_luz_core import analyze
-result = analyze(samples, 44_100, pixels=[(255, 0, 0), (0, 0, 255)])
+from ritmo_de_luz_core import renderVideo
+
+analysis = renderVideo("samples/dalia.jpg", "artifacts/demo/audio/menu-loop.wav", "out.mp4")
+print(analysis["syncScore"], analysis["tempo"])
 ```
 
-`generateMosaicMp4(image, audio, output, sample_rate=44_100)` acepta arrays o
-rutas de imagen/audio y genera un mosaico 4×6 reactivo a mel bands. La mezcla de
-audio depende del backend FFmpeg disponible; el render de frames no depende de
-`scikit-learn`.
+- `audio.analyzeAudio`: 12 bandas mel en dB, normalizadas y suavizadas; RMS, centroide,
+  ataques, destello y tempo.
+- `palette.extractPalette`: 5 colores dominantes con K-Means.
+- `states.clusterStates`: 4 estados acústicos con K-Means, ordenados por energía y
+  asociados a los colores de la paleta.
+- `pipeline.buildMosaicFrame`: compone un cuadro 3 × 4 a partir de las 12 energías.
+- `pipeline.renderVideo`: tramo de 20 s → análisis → cuadros → MP4 con audio.

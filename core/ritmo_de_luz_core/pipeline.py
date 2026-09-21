@@ -1,141 +1,262 @@
-"""API de análisis y generación de frames."""
+"""Render del ecualizador visual: imagen dividida en 3 × 4 mosaicos, uno por banda mel."""
 from __future__ import annotations
 
-import shutil
 import subprocess
 import tempfile
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable
 from pathlib import Path
 
+import numpy as np
+from PIL import Image, ImageOps
+
 from .audio import analyzeAudio
-from .models import AnalysisResult, AudioFeatures, Palette, VisualFrame, VisualState
+from .models import AudioFeatures, Palette, VisualState
 from .palette import extractPalette
-from .states import assignStateLabels, clusterStates
+from .states import clusterStates
+
+FPS = 30
+SIZE = (1280, 720)  # múltiplos de 16: el códec H.264 no reescala el cuadro
+ROWS, COLS = 3, 4  # 12 mosaicos = 12 bandas
+GUTTER = 6
+CLIP_SECONDS = 20.0
+MIN_SECONDS = 10.0
+ZOOM = 0.18  # acercamiento máximo del mosaico con energía 1
+CONTRAST = 0.9  # cuánto se separa cada banda del promedio del instante
+GAMMA = 1.4  # curva >1: los tramos suaves quedan oscuros y los golpes destacan
+FLASH_LIFT = 0.38  # cuánto aclara un ataque todo el cuadro
+
+ProgressFn = Callable[[int, str], None]
 
 
-def analyze(samples: Sequence[float], sampleRate: int, pixels: Iterable[Sequence[int]] = (), *, useMl: bool = True) -> AnalysisResult:
-    audio = analyzeAudio(samples, sampleRate)
-    palette = extractPalette(pixels, useMl=useMl)
-    states = clusterStates(audio, palette, useMl=useMl)
-    frames = tuple(VisualFrame(i, audio.times[i], states[i % len(states)].name,
-                               states[i % len(states)].intensity, states[i % len(states)].color)
-                   for i in range(len(audio.times))) if states else ()
-    return AnalysisResult(audio, palette, states, frames)
-
-def renderMp4(frames: Sequence[VisualFrame], output: str, *, fps: int = 30, size=(640, 360)) -> str:
-    """Renderiza frames de color sólido si están disponibles imageio y FFmpeg."""
-    try:
-        import imageio.v3 as iio
-        import numpy as np
-    except Exception as exc:
-        raise RuntimeError("MP4 rendering requires imageio and ffmpeg") from exc
-    images = [np.full((size[1], size[0], 3), frame.color, dtype=np.uint8) for frame in frames]
-    iio.imwrite(output, images, fps=fps)
-    return output
+def bandCell(band: int, rows: int = ROWS, cols: int = COLS) -> tuple[int, int]:
+    """Banda 0 (graves) abajo a la izquierda; banda 11 (agudos) arriba a la derecha."""
+    return rows - 1 - band // cols, band % cols
 
 
-def buildMosaicFrame(image, *, mel: Sequence[float] = (), intensity: float = 1.0,
-                     color=(255, 255, 255), rows: int = 4, columns: int = 6,
-                     size=(960, 540)):
-    """Construye un mosaico RGB reproducible; cada baldosa sigue una banda mel."""
-    try:
-        import numpy as np
-        from PIL import Image
-    except Exception as exc:
-        raise RuntimeError("mosaic rendering requires numpy and pillow") from exc
-    source = np.asarray(image, dtype=np.uint8)
-    if source.ndim != 3 or source.shape[2] < 3:
-        raise ValueError("image must be an HxWx3 RGB array")
-    source = source[:, :, :3]
-    tile_w, tile_h = size[0] // columns, size[1] // rows
-    values = list(mel) or [0.0]
-    canvas = np.zeros((tile_h * rows, tile_w * columns, 3), dtype=np.uint8)
-    tint = np.asarray(color, dtype=float) / 255.0
-    for idx in range(rows * columns):
-        value = max(0.0, min(1.0, float(values[idx % len(values)])))
-        scale = 0.82 + 0.24 * value
-        crop_w = max(1, int(source.shape[1] / scale)); crop_h = max(1, int(source.shape[0] / scale))
-        cx, cy = source.shape[1] // 2, source.shape[0] // 2
-        crop = source[max(0, cy - crop_h // 2):cy + crop_h // 2,
-                      max(0, cx - crop_w // 2):cx + crop_w // 2]
-        tile = np.asarray(Image.fromarray(crop).resize((tile_w, tile_h), Image.Resampling.BILINEAR), dtype=float)
-        alpha = 0.55 + 0.45 * value
-        tile = tile * (0.75 + 0.25 * float(intensity)) * alpha + (255.0 * tint) * (1 - alpha)
-        y, x = (idx // columns) * tile_h, (idx % columns) * tile_w
-        canvas[y:y + tile_h, x:x + tile_w] = np.clip(tile, 0, 255).astype(np.uint8)
-    return canvas
+def openImage(image) -> Image.Image:
+    picture = Image.open(image) if isinstance(image, (str, Path)) else Image.fromarray(np.asarray(image, dtype=np.uint8))
+    return ImageOps.exif_transpose(picture).convert("RGB")
 
 
-def generateMosaicMp4(image, audio, output: str, *, sampleRate: int | None = None,
-                      fps: int = 30, size=(960, 540), rows: int = 4, columns: int = 6,
-                      useMl: bool = True, onProgress: Callable[[int, str], None] | None = None,
-                      onAnalysis: Callable[[AudioFeatures, Palette, tuple[VisualState, ...], tuple[int, ...]], None] | None = None) -> str:
-    """Genera un MP4 de mosaicos reactivos desde rutas o arrays de audio e imagen."""
-    try:
-        import numpy as np
-        from PIL import Image
-    except Exception as exc:
-        raise RuntimeError("mosaic rendering requires imageio, numpy and pillow") from exc
-    image_path = str(image) if isinstance(image, (str, Path)) else None
-    source = np.asarray(Image.open(image).convert("RGB")) if image_path else np.asarray(image)
-    audio_path = str(audio) if isinstance(audio, (str, Path)) else None
-    if audio_path:
-        try:
-            import soundfile as sf
-            samples, detected_rate = sf.read(audio_path, dtype="float32")
-            samples = np.mean(samples, axis=1) if np.ndim(samples) > 1 else samples
-            sampleRate = sampleRate or int(detected_rate)
-        except Exception as exc:
-            raise RuntimeError("loading audio paths requires soundfile") from exc
+def fitImage(image, size=SIZE) -> np.ndarray:
+    """Recorta al centro y escala a `size` sin deformar la imagen."""
+    return np.asarray(ImageOps.fit(openImage(image), size, Image.Resampling.LANCZOS))
+
+
+def cropBox(width: int, height: int, size=SIZE) -> list[float]:
+    """Zona que conserva `fitImage`, en fracciones de la imagen original (x0, y0, x1, y1)."""
+    target = size[0] / size[1]
+    if width / height > target:
+        keep = height * target / width
+        return [(1 - keep) / 2, 0.0, (1 + keep) / 2, 1.0]
+    keep = width / target / height
+    return [0.0, (1 - keep) / 2, 1.0, (1 + keep) / 2]
+
+
+def envelope(samples: np.ndarray, points: int = 400) -> np.ndarray:
+    """RMS del audio completo en `points` tramos, 0–1, para dibujar la forma de onda."""
+    chunk = max(1, samples.size // points)
+    usable = samples[: chunk * (samples.size // chunk)].astype(float).reshape(-1, chunk)
+    rms = np.sqrt((usable ** 2).mean(axis=1))
+    return rms / max(1e-9, rms.max())
+
+
+def buildMosaicFrame(base: np.ndarray, bands, *, flash: float = 0.0,
+                     stateColor=(255, 255, 255), rows: int = ROWS, cols: int = COLS,
+                     gutter: int = GUTTER) -> np.ndarray:
+    """Compone un cuadro: cada mosaico muestra SU región de la imagen.
+
+    Energía de la banda (0–1) → contraste espectral y curva gamma → brillo
+    (0.22×–1.25×) y acercamiento (hasta +18 %).
+    Ataque (flash 0–1) → aclara todo el cuadro hacia el color del estado.
+    Estado K-Means → color de las juntas entre mosaicos.
+    """
+    bands = np.clip(np.asarray(bands, dtype=float), 0.0, 1.0)
+    if bands.size != rows * cols:
+        raise ValueError(f"expected {rows * cols} band values, got {bands.size}")
+    bands = visualEnergy(bands)
+    height, width = base.shape[:2]
+    tileH, tileW = height // rows, width // cols
+    color = np.asarray(stateColor, dtype=float)
+    joint = color * (0.35 + 0.65 * flash)
+    canvas = np.empty((tileH * rows, tileW * cols, 3), dtype=float)
+    canvas[:] = joint
+    lift = (color + 255.0) / 2
+    half = gutter // 2
+    innerW, innerH = tileW - gutter, tileH - gutter
+    for band, energy in enumerate(bands):
+        row, col = bandCell(band, rows, cols)
+        y, x = row * tileH, col * tileW
+        region = base[y:y + tileH, x:x + tileW]
+        zoom = 1.0 + ZOOM * energy
+        cropW, cropH = int(tileW / zoom), int(tileH / zoom)
+        cx, cy = (tileW - cropW) // 2, (tileH - cropH) // 2
+        crop = Image.fromarray(region[cy:cy + cropH, cx:cx + cropW])
+        tile = np.asarray(crop.resize((innerW, innerH), Image.Resampling.BILINEAR), dtype=float)
+        tile *= 0.22 + 1.03 * energy
+        tile += FLASH_LIFT * flash * (lift - tile)
+        canvas[y + half:y + half + innerH, x + half:x + half + innerW] = tile
+    return np.clip(canvas, 0, 255).astype(np.uint8)
+
+
+def visualEnergy(bands: np.ndarray) -> np.ndarray:
+    """Resalta las bandas que sobresalen en el instante y oscurece los tramos suaves."""
+    spread = bands + CONTRAST * (bands - bands.mean())
+    return np.clip(spread, 0.0, 1.0) ** GAMMA
+
+
+def loadAudio(path) -> tuple[np.ndarray, int]:
+    import soundfile as sf
+
+    samples, sampleRate = sf.read(str(path), dtype="float32", always_2d=True)
+    return samples.mean(axis=1), int(sampleRate)
+
+
+def pickSegment(samples: np.ndarray, sampleRate: int, seconds: float = CLIP_SECONDS) -> tuple[float, np.ndarray]:
+    """Devuelve el tramo de `seconds` con más energía (paso de 0.5 s)."""
+    length = int(seconds * sampleRate)
+    if samples.size <= length:
+        return 0.0, samples
+    step = sampleRate // 2
+    energy = np.convolve(samples.astype(float) ** 2, np.ones(step), mode="valid")[::step]
+    windows = length // step
+    totals = np.convolve(energy, np.ones(windows), mode="valid")
+    start = int(np.argmax(totals)) * step
+    return start / sampleRate, samples[start:start + length]
+
+
+def perFrame(features: AudioFeatures, frameCount: int, fps: int, labels: np.ndarray) -> dict[str, np.ndarray]:
+    """Interpola las series por hop (~86/s) a los instantes exactos de cada cuadro de video."""
+    t = np.arange(frameCount) / fps
+    interp = lambda series: np.interp(t, features.times, series)
+    hopIndex = np.clip(np.round(t * features.sampleRate / features.hop).astype(int), 0, len(features.times) - 1)
+    return {
+        "t": t,
+        "bands": np.stack([interp(row) for row in features.melSmooth], axis=1),
+        "bandsRaw": np.stack([interp(row) for row in features.melRaw], axis=1),
+        "bandsDb": np.stack([interp(row) for row in features.melDb], axis=1),
+        "flash": interp(features.flash),
+        "onset": interp(features.onset),
+        "rms": interp(features.rms),
+        "state": labels[hopIndex] if labels.size else np.zeros(frameCount, dtype=int),
+    }
+
+
+def renderVideo(image, audio, output, *, sampleRate: int | None = None, seconds: float = CLIP_SECONDS,
+                minSeconds: float = MIN_SECONDS, fps: int = FPS, size=SIZE,
+                onProgress: ProgressFn | None = None, posterPath=None) -> dict:
+    """Genera el MP4 con audio y devuelve el análisis que alimenta la interfaz."""
+    import imageio.v2 as imageio
+    import imageio_ffmpeg
+    import soundfile as sf
+
+    report = onProgress or (lambda progress, phase: None)
+    if isinstance(audio, (str, Path)):
+        samples, sampleRate = loadAudio(audio)
     else:
-        samples = np.asarray(audio, dtype=float)
-    if not sampleRate:
-        raise ValueError("sampleRate is required when audio is an array")
+        samples = np.asarray(audio, dtype=np.float32).reshape(-1)
+        if not sampleRate:
+            raise ValueError("sampleRate is required when audio is an array")
     if samples.size == 0:
         raise ValueError("audio must contain at least one sample")
-    if onProgress:
-        onProgress(20, "Analizando audio")
-    try:
-        import imageio.v3 as iio
-    except Exception as exc:
-        raise RuntimeError("mosaic rendering requires imageio, numpy and pillow") from exc
-    features = analyzeAudio(samples, sampleRate, melBands=12)
-    palette = extractPalette(source.reshape(-1, 3)[::max(1, source.shape[0] * source.shape[1] // 2000)], useMl=useMl)
-    states = clusterStates(features, palette, useMl=useMl)
-    stateLabels = assignStateLabels(features, count=len(states), useMl=useMl) if states else ()
-    if onAnalysis:
-        onAnalysis(features, palette, states, stateLabels)
-    if onProgress:
-        onProgress(35, "Definiendo estados visuales")
-    duration = max(1, round(len(samples) / sampleRate * fps))
-    frames = []
-    for idx in range(duration):
-        exactPos = min(len(features.times) - 1, idx / fps * sampleRate / 512)
-        leftPos = int(exactPos)
-        rightPos = min(len(features.times) - 1, leftPos + 1)
-        blend = exactPos - leftPos
-        leftMel = features.mel_bands[leftPos] if features.mel_bands else (features.rms[leftPos],)
-        rightMel = features.mel_bands[rightPos] if features.mel_bands else (features.rms[rightPos],)
-        mel = tuple((1 - blend) * left + blend * right for left, right in zip(leftMel, rightMel))
-        stateIndex = stateLabels[min(len(stateLabels) - 1, round(exactPos))] if stateLabels else 0
-        state = states[stateIndex] if states else None
-        intensity = state.intensity if state else features.rms[leftPos]
-        color = state.color if state else (255, 255, 255)
-        frames.append(buildMosaicFrame(source, mel=mel, intensity=intensity, color=color,
-                                       rows=rows, columns=columns, size=size))
-        if onProgress and (idx == duration - 1 or idx % max(1, duration // 10) == 0):
-            onProgress(35 + round(50 * (idx + 1) / duration), "Construyendo mosaicos")
-    iio.imwrite(output, np.asarray(frames), fps=fps)
-    if onProgress:
-        onProgress(95, "Exportando MP4")
-    if audio_path and shutil.which("ffmpeg"):
-        with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp:
-            muxed = tmp.name
+    if samples.size / sampleRate < minSeconds:
+        raise ValueError(f"El audio debe durar al menos {minSeconds:g} s.")
+
+    report(10, "Eligiendo el tramo de audio")
+    start, segment = pickSegment(samples, sampleRate, seconds)
+    report(20, "Calculando bandas mel y ataques")
+    features = analyzeAudio(segment, sampleRate)
+    source = openImage(image)
+    base = np.asarray(ImageOps.fit(source, size, Image.Resampling.LANCZOS))
+    report(30, "Agrupando colores y estados con K-Means")
+    palette = extractPalette(base)
+    states, labels = clusterStates(features, palette)
+    frameCount = max(1, round(segment.size / sampleRate * fps))
+    series = perFrame(features, frameCount, fps, labels)
+
+    output = Path(output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    luminance = np.empty(frameCount)
+    posterFrame, posterScore = None, -1.0
+    with tempfile.TemporaryDirectory() as tmp:
+        silent, wav = Path(tmp) / "video.mp4", Path(tmp) / "audio.wav"
+        writer = imageio.get_writer(silent, fps=fps, codec="libx264", quality=None, macro_block_size=16,
+                                    pixelformat="yuv420p", ffmpeg_log_level="error",
+                                    output_params=["-crf", "22", "-preset", "medium"])
         try:
-            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(output),
-                            "-i", audio_path, "-c:v", "copy", "-c:a", "aac", "-shortest", muxed],
-                           check=True)
-            Path(muxed).replace(output)
+            for i in range(frameCount):
+                state = states[series["state"][i]] if states else None
+                frame = buildMosaicFrame(base, series["bands"][i], flash=float(series["flash"][i]),
+                                         stateColor=state.color if state else (255, 255, 255))
+                writer.append_data(frame)
+                luminance[i] = frame.mean()
+                score = float(series["bands"][i].mean())
+                if score > posterScore:
+                    posterFrame, posterScore = frame, score
+                if i % max(1, frameCount // 20) == 0:
+                    report(35 + round(55 * i / frameCount), "Componiendo cuadros")
         finally:
-            Path(muxed).unlink(missing_ok=True)
-    return output
+            writer.close()
+        report(92, "Uniendo audio y video")
+        sf.write(wav, segment, sampleRate)
+        subprocess.run([imageio_ffmpeg.get_ffmpeg_exe(), "-y", "-loglevel", "error", "-i", str(silent),
+                        "-i", str(wav), "-c:v", "copy", "-c:a", "aac", "-b:a", "160k", "-shortest",
+                        "-movflags", "+faststart", str(output)], check=True)
+    if posterPath and posterFrame is not None:
+        Image.fromarray(posterFrame).save(posterPath, quality=88)
+    report(98, "Guardando análisis")
+    payload = analysisPayload(features, palette, states, series, luminance, fps=fps,
+                              start=start, duration=segment.size / sampleRate, size=size)
+    payload["input"] = {
+        "durationSeconds": round(samples.size / sampleRate, 2),
+        "envelope": np.round(envelope(samples), 3).tolist(),
+        "imageSize": list(source.size),
+        "crop": [round(v, 4) for v in cropBox(*source.size, size)],
+    }
+    return payload
+
+
+def syncScore(onset: np.ndarray, luminance: np.ndarray) -> float:
+    """Correlación entre la fuerza de ataque y la subida de brillo del video (−1 a 1)."""
+    rise = np.maximum(0.0, np.diff(luminance, prepend=luminance[:1]))
+    if onset.std() < 1e-9 or rise.std() < 1e-9:
+        return 0.0
+    return float(np.corrcoef(onset, rise)[0, 1])
+
+
+def analysisPayload(features: AudioFeatures, palette: Palette, states: tuple[VisualState, ...],
+                    series: dict[str, np.ndarray], luminance: np.ndarray, *, fps: int,
+                    start: float, duration: float, size) -> dict:
+    r = lambda values, digits=3: np.round(np.asarray(values, dtype=float), digits).tolist()
+    vivid = palette.byVividness()
+    dbRange = np.percentile(features.melDb, [5, 95], axis=1).T
+    return {
+        "fps": fps,
+        "size": list(size),
+        "grid": {"rows": ROWS, "cols": COLS},
+        "segmentStart": round(start, 2),
+        "durationSeconds": round(duration, 2),
+        "sampleRate": features.sampleRate,
+        "hop": features.hop,
+        "tempo": round(features.tempo, 1),
+        "bandEdgesHz": r(features.bandEdgesHz, 0),
+        "onsetTimes": r(features.onsetTimes, 3),
+        "beatTimes": r(features.beatTimes, 3),
+        "syncScore": round(syncScore(series["onset"], luminance), 3),
+        "bandDbRange": r(dbRange, 1),
+        "frames": {
+            "bands": r(series["bands"]),
+            "bandsRaw": r(series["bandsRaw"]),
+            "bandsDb": r(series["bandsDb"], 1),
+            "flash": r(series["flash"]),
+            "onset": r(series["onset"]),
+            "rms": r(series["rms"]),
+            "state": series["state"].astype(int).tolist(),
+            "luminance": r(luminance / 255.0),
+        },
+        "palette": [{"rgb": list(c), "weight": round(w, 3), "vividRank": vivid.index(c)}
+                    for c, w in zip(palette.colors, palette.weights)],
+        "states": [{"id": s.id, "name": s.name, "rgb": list(s.color), "energy": round(s.energy, 3),
+                    "brightness": round(s.brightness, 3), "attacks": round(s.attacks, 3),
+                    "share": round(s.share, 3)} for s in states],
+    }

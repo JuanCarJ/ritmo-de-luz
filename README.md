@@ -1,64 +1,59 @@
 # Ritmo de Luz
 
-**El sonido se convierte en luz.**
+Midterm, Proyecto 2 (Image–Audio Synchronizer). Una foto se divide en 12 mosaicos
+(3 × 4). Cada mosaico sigue a una de las 12 bandas mel del audio: se ilumina y se acerca
+cuando su banda suena, y los golpes del audio aclaran todo el cuadro.
 
-Ritmo de Luz es la entrega del Midterm: una aplicación de investigación multimedia que analiza un audio,
-extrae energía y bandas de frecuencia, y transforma una imagen en una animación
-de mosaicos sincronizada con el sonido. K-Means forma parte del pipeline: agrupa
-las ventanas acústicas por energía, brillo y ataques, y usa esos estados para guiar
-los colores de la imagen. Se ejecuta por defecto con `ENABLE_ML=true`.
+## Ejecutar (un paso)
 
-## Ver el resultado
+Requisito: Python 3.11 o superior. No hace falta instalar FFmpeg.
 
-La demo pública se publicará en una URL dedicada cuando la versión local haya sido
-probada y aprobada. El servidor tendrá un MP4 demo precargado para que la aplicación
-sea evaluable desde el primer clic, sin esperar un render nuevo.
+- **macOS:** doble clic en `Iniciar_Mac.command`. Si macOS lo bloquea: clic derecho → Abrir.
+- **Windows:** doble clic en `Iniciar_Windows.bat`.
 
-## Ejecutar localmente sin Docker
+La primera vez se crea `.venv` y se instalan las dependencias (1–3 min). Luego se abre el
+navegador en <http://127.0.0.1:8000> con el video de la demo ya reproduciéndose.
+Los tres ejemplos vienen pregenerados; con **Usar mis archivos** se genera uno nuevo
+(15–40 s).
 
-Requisitos: Python 3.11+, FFmpeg (o `imageio-ffmpeg`) y un navegador.
+Desde una terminal, lo equivalente es:
 
 ```bash
 python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -e '.[dev,ml]'
-python scripts/check_environment.py
-python scripts/run_local.py
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python scripts/run_local.py
 ```
 
-Abrir <http://127.0.0.1:8000>. La página incluye la demo preparada y un recorrido
-para procesar archivos propios.
+## Qué hace el pipeline
 
-La interfaz usa Tailwind CSS compilado dentro de `apps/web/static/tailwind.css`.
-Si se cambian clases de la interfaz, regenerarlo con:
+1. **Tramo:** elige los 20 s con más energía del audio (el video debe durar 10–20 s).
+2. **Bandas:** STFT (n_fft 2048, hop 512) → 12 bandas mel (30 Hz–16 kHz) con `librosa`,
+   convertidas a dB.
+3. **Normalización:** cada banda se lleva a 0–1 entre sus percentiles 5 y 95, así que un
+   pico aislado no aplana el resto.
+4. **Suavizado:** envolvente de ataque rápido y caída lenta (sube en un hop y cae en unos
+   0,15 s); después se interpola a los instantes exactos de cada cuadro (30 FPS).
+5. **Ataques:** `onset_strength` + `onset_detect`; cada ataque produce un destello con caída
+   exponencial.
+6. **Mapeo:** banda 1 (graves) abajo a la izquierda y banda 12 (agudos) arriba a la derecha.
+   La energía controla el brillo (0,22×–1,25×) y el zoom (hasta +18 %) del mosaico.
+7. **K-Means:** agrupa los píxeles en 5 colores dominantes y los instantes del audio
+   (RMS, centroide, ataque) en 4 estados, de Reposo a Clímax. El estado más enérgico toma
+   el color más vivo de la foto y lo pinta en las juntas.
+8. **Salida:** MP4 1280×720, 30 FPS, H.264 + AAC; audio unido con el FFmpeg de `imageio-ffmpeg`.
 
-```bash
-npm install
-npm run build:css
-```
-
-## Ejecutar el pipeline académico
-
-```bash
-python scripts/generate_demo.py
-```
-
-El pipeline produce tres MP4, un póster y un manifiesto reproducible en
-`artifacts/demo/`. Las features, la paleta y los estados se calculan dentro de
-`core/` y se pueden inspeccionar ejecutando sus pruebas.
+La interfaz muestra, sincronizado con el video, lo que calculó el pipeline: bandas, mapa
+de mosaicos, ataques y estado K-Means. La sección plegable *Cómo se calcula cada cuadro*
+muestra el espectrograma, el efecto del suavizado y la correlación entre ataques del audio
+y brillo del video (0,90 en Menu Loop y Space Ranger; 0,49 en Peaceful Forest, que casi no
+tiene golpes).
 
 ## Estructura
 
-- `core/`: análisis de audio, imagen, ML y renderizado; no conoce Docker ni HTTP.
-- `apps/api/`: API local y pública.
-- `apps/worker/`: trabajos de render largos.
-- `apps/web/`: interfaz web.
-- `deploy/`: Docker Compose, Caddy y scripts operativos.
-- `docs/academic/`: trazabilidad entre requisitos, conceptos y resultados.
-- `docs/operations/`: ejecución y publicación; no contiene secretos.
-
-## Estado de despliegue
-
-El despliegue en `servidor_do_1` está deliberadamente deshabilitado hasta que la
-demo local sea probada y aprobada. `deploy_enabled: false` en `delivery.yaml` es
-una barrera explícita de esta etapa.
+- `core/ritmo_de_luz_core/`: análisis (`audio.py`), paleta (`palette.py`), estados
+  (`states.py`) y render (`pipeline.py`). No depende de la web.
+- `apps/api/`, `apps/worker/`: servidor local y cola de renders.
+- `apps/web/static/`: interfaz (HTML, CSS y JS sin compilación).
+- `scripts/generate_demo.py`: regenera las tres demos de `artifacts/demo/`.
+- `samples/`: fotos y audios originales; créditos en `docs/academic/media-attributions.md`.
+- `tests/`: `python -m pytest -q`.

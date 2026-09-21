@@ -1,22 +1,20 @@
-"""Núcleo puro de análisis audiovisual para Ritmo de Luz."""
+"""Núcleo de análisis audiovisual para Ritmo de Luz."""
 from .audio import analyzeAudio
-from .models import AnalysisResult, AudioFeatures, Palette, VisualFrame, VisualState
+from .models import AudioFeatures, Palette, VisualState
 from .palette import extractPalette
-from .pipeline import analyze, buildMosaicFrame, generateMosaicMp4, renderMp4
-from .states import assignStateLabels, clusterStates
+from .pipeline import bandCell, buildMosaicFrame, fitImage, pickSegment, renderVideo
+from .states import clusterStates
 
 __all__ = [
-           "AnalysisResult",
-           "AudioFeatures",
-           "Palette",
-           "VisualFrame",
-           "VisualState",
-           "analyze",
-           "analyzeAudio",
-           "assignStateLabels",
-           "buildMosaicFrame",
-           "clusterStates",
-           "extractPalette",
-           "generateMosaicMp4",
-           "renderMp4",
+    "AudioFeatures",
+    "Palette",
+    "VisualState",
+    "analyzeAudio",
+    "bandCell",
+    "buildMosaicFrame",
+    "clusterStates",
+    "extractPalette",
+    "fitImage",
+    "pickSegment",
+    "renderVideo",
 ]

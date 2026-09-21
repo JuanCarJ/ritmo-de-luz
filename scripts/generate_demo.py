@@ -1,151 +1,98 @@
+"""Genera las tres demos precargadas: clip de entrada, MP4, póster y análisis."""
 from __future__ import annotations
 
 import json
+import shutil
 import sys
 from pathlib import Path
 
 import numpy as np
 import soundfile as sf
-from PIL import Image, ImageDraw
 
 root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(root / "core"))
 
 samplesDir = root / "samples"
 demoDir = root / "artifacts" / "demo"
-demoAudioDir = demoDir / "audio"
-demoImageDir = demoDir / "images"
-demoAnalysisDir = demoDir / "analysis"
-publicAudios = [
-    ("menu-loop", "menu-loop.wav", "Loop musical CC0 para ritmo y ataques."),
-    ("peaceful-forest", "peaceful-forest.wav", "Textura ambiental CC0 para suavizado."),
-    ("space-ranger", "space-ranger.wav", "Loop downtempo CC0 para cambios espectrales."),
+INPUT_SECONDS = 30  # el enunciado pide un audio de entrada de 20–40 s
+
+# Cada demo es una pareja fija imagen + audio: lo que se ve es exactamente lo que se renderizó.
+DEMOS = [
+    {"id": "menu-loop", "title": "Menu Loop", "audio": "menu-loop.wav", "image": "dalia.jpg",
+     "mood": "Loop rítmico con golpes marcados."},
+    {"id": "cyberpunk", "title": "Cyberpunk Moonlight Sonata", "audio": "cyberpunk-moonlight-sonata.mp3",
+     "image": "aurora.jpg", "mood": "Electrónica: bombo constante."},
+    {"id": "battle-theme", "title": "Battle Theme A", "audio": "battle-theme-a.mp3", "image": "carina.jpg",
+     "mood": "Orquesta: cuerdas y metales."},
+    {"id": "space-ranger", "title": "Space Ranger", "audio": "space-ranger.wav", "image": "pagoda.jpg",
+     "mood": "Downtempo con bajo profundo."},
+    {"id": "peaceful-forest", "title": "Peaceful Forest", "audio": "peaceful-forest.wav", "image": "coral.png",
+     "mood": "Ambiental: casi sin golpes."},
 ]
 
 
-def ensureImage() -> Path:
-    samplesDir.mkdir(exist_ok=True)
-    imagePath = samplesDir / "demo-image.png"
-    if not imagePath.exists():
-        width, height = 960, 540
-        y, x = np.mgrid[0:height, 0:width]
-        red = np.clip(32 + 190 * x / width + 22 * np.sin(y / 35), 0, 255)
-        green = np.clip(18 + 70 * y / height + 55 * np.sin(x / 48), 0, 255)
-        blue = np.clip(90 + 130 * (1 - x / width) + 24 * np.cos((x + y) / 50), 0, 255)
-        image = Image.fromarray(np.uint8(np.dstack([red, green, blue])), "RGB")
-        draw = ImageDraw.Draw(image)
-        draw.ellipse((280, 110, 680, 510), outline=(255, 220, 160), width=8)
-        draw.text((42, 42), "RITMO DE LUZ", fill=(255, 240, 220))
-        image.save(imagePath)
-    return imagePath
+CREDITS = ("Imágenes: vultilion y danielbuechele (Flickr, CC BY 2.0); Stephan Sprinz (Wikimedia Commons, "
+           "CC BY 4.0); NASA/ESA/Hubble y NOAA Fisheries (dominio público). Música: Akikazer, Samza, Nostromo, "
+           "Joth y cynicmusic (OpenGameArt, CC0).")
 
 
-def ensureImages() -> list[dict[str, str]]:
-    demoImageDir.mkdir(parents=True, exist_ok=True)
-    width, height = 960, 540
-    y, x = np.mgrid[0:height, 0:width]
-    sources = [
-        ("aurora", "Aurora", np.dstack([40 + 180 * x / width, 35 + 130 * y / height, 150 + 80 * np.sin(x / 80)])),
-        ("pulso", "Pulso", np.dstack([180 + 60 * np.sin(x / 45), 35 + 170 * x / width, 45 + 150 * y / height])),
-        ("cosmos", "Cosmos", np.dstack([25 + 80 * y / height, 30 + 70 * x / width, 120 + 100 * np.cos((x + y) / 55)])),
-    ]
-    images = []
-    for imageId, name, values in sources:
-        imagePath = demoImageDir / f"{imageId}.png"
-        if not imagePath.exists():
-            Image.fromarray(np.uint8(np.clip(values, 0, 255)), "RGB").save(imagePath)
-        images.append({"id": imageId, "name": name, "imageUrl": f"/artifacts/demo/images/{imagePath.name}"})
-    return images
+def prepareImages() -> None:
+    """Copia las fotos CC BY 2.0 que distribuye scikit-learn (ver docs/academic/media-attributions.md)."""
+    from sklearn.datasets import images as sklearnImages
+
+    source = Path(sklearnImages.__file__).parent
+    for name, target in (("flower.jpg", "dalia.jpg"), ("china.jpg", "pagoda.jpg")):
+        if not (samplesDir / target).exists():
+            shutil.copy(source / name, samplesDir / target)
 
 
-def trimAudio(sourcePath: Path, targetPath: Path, seconds: int = 20) -> None:
-    samples, sampleRate = sf.read(sourcePath, dtype="float32", always_2d=False)
-    if samples.ndim > 1:
-        samples = samples.mean(axis=1)
-    targetSamples = int(sampleRate * seconds)
-    samples = samples[:targetSamples]
-    if len(samples) < targetSamples:
-        samples = np.pad(samples, (0, targetSamples - len(samples)))
-    sf.write(targetPath, samples, sampleRate)
+def inputClip(sourcePath: Path, targetPath: Path, seconds: int = INPUT_SECONDS) -> None:
+    """Deja un clip de entrada de `seconds`; si el original es más corto (loop), lo repite."""
+    samples, sampleRate = sf.read(sourcePath, dtype="float32", always_2d=True)
+    samples = samples.mean(axis=1)
+    target = int(sampleRate * seconds)
+    if samples.size < target:
+        samples = np.tile(samples, int(np.ceil(target / samples.size)))
+    sf.write(targetPath, samples[:target], sampleRate)
 
 
 def main() -> int:
-    from ritmo_de_luz_core.audio import analyzeAudio
-    from ritmo_de_luz_core.palette import extractPalette
-    from ritmo_de_luz_core.pipeline import buildMosaicFrame, generateMosaicMp4
-    from ritmo_de_luz_core.states import clusterStates
+    from ritmo_de_luz_core.pipeline import renderVideo
 
-    imagePath = ensureImage()
-    images = ensureImages()
-    demoDir.mkdir(parents=True, exist_ok=True)
-    demoAudioDir.mkdir(parents=True, exist_ok=True)
-    demoAnalysisDir.mkdir(parents=True, exist_ok=True)
+    prepareImages()
+    for folder in ("audio", "images", "analysis"):
+        (demoDir / folder).mkdir(parents=True, exist_ok=True)
     demos = []
-    for audioId, audioName, description in publicAudios:
-        sourcePath = samplesDir / audioName
-        if not sourcePath.exists():
-            raise FileNotFoundError(f"Falta el audio público: {sourcePath}")
-        trimmedPath = demoAudioDir / f"{audioId}.wav"
-        trimAudio(sourcePath, trimmedPath, seconds=20)
-        audioSamples, sampleRate = sf.read(trimmedPath, dtype="float32", always_2d=False)
-        features = analyzeAudio(audioSamples, int(sampleRate), melBands=12)
-        imagePixels = np.asarray(Image.open(imagePath).convert("RGB")).reshape(-1, 3)
-        palette = extractPalette(imagePixels, useMl=True)
-        states = clusterStates(features, palette, useMl=True)
-        analysisPath = demoAnalysisDir / f"{audioId}.json"
-        analysisPath.write_text(json.dumps({
-            "times": features.times,
-            "waveform": [float(value) for value in audioSamples[::max(1, len(audioSamples) // 120)]],
-            "rms": features.rms,
-            "rawRms": features.rawRms,
-            "spectralCentroid": features.spectral_centroid,
-            "rawSpectralCentroid": features.rawSpectralCentroid,
-            "onset": features.onset,
-            "rawOnset": features.rawOnset,
-            "melBands": features.mel_bands,
-            "palette": {"colors": palette.colors, "weights": palette.weights},
-            "states": [{"name": state.name, "intensity": state.intensity, "color": state.color, "features": state.features} for state in states],
-        }), encoding="utf-8")
-        outputPath = demoDir / f"ritmo-de-luz-{audioId}.mp4"
-        generateMosaicMp4(image=imagePath, audio=trimmedPath, output=str(outputPath), useMl=True)
-        mappingPath = demoDir / f"ritmo-de-luz-{audioId}-mapping.png"
-        firstState = states[0] if states else None
-        mappingFrame = buildMosaicFrame(
-            np.asarray(Image.open(imagePath).convert("RGB")),
-            mel=features.mel_bands[0] if features.mel_bands else (features.rms[0],),
-            intensity=firstState.intensity if firstState else features.rms[0],
-            color=firstState.color if firstState else (255, 255, 255),
-            rows=4,
-            columns=6,
-            size=(960, 540),
-        )
-        Image.fromarray(mappingFrame).save(mappingPath)
+    for demo in DEMOS:
+        demoId = demo["id"]
+        clip = demoDir / "audio" / f"{demoId}.wav"
+        inputClip(samplesDir / demo["audio"], clip)
+        image = demoDir / "images" / demo["image"]
+        shutil.copy(samplesDir / demo["image"], image)
+        video = demoDir / f"{demoId}.mp4"
+        poster = demoDir / f"{demoId}.jpg"
+        print(f"Renderizando {demo['title']}...", flush=True)
+        analysis = renderVideo(image, clip, video, posterPath=poster)
+        (demoDir / "analysis" / f"{demoId}.json").write_text(json.dumps(analysis), encoding="utf-8")
         demos.append({
-            "id": audioId,
-            "name": audioId.replace("-", " ").title(),
-            "audio": audioName,
-            "audioUrl": f"/artifacts/demo/audio/{trimmedPath.name}",
-            "analysisUrl": f"/artifacts/demo/analysis/{analysisPath.name}",
-            "videoUrl": f"/artifacts/demo/{outputPath.name}",
-            "mappingUrl": f"/artifacts/demo/{mappingPath.name}",
-            "description": description,
-            "durationSeconds": 20,
-            "mlEnabled": True,
+            "id": demoId,
+            "title": demo["title"],
+            "mood": demo["mood"],
+            "imageName": demo["image"],
+            "audioUrl": f"/artifacts/demo/audio/{clip.name}",
+            "imageUrl": f"/artifacts/demo/images/{image.name}",
+            "videoUrl": f"/artifacts/demo/{video.name}",
+            "posterUrl": f"/artifacts/demo/{poster.name}",
+            "analysisUrl": f"/artifacts/demo/analysis/{demoId}.json",
+            "tempo": analysis["tempo"],
+            "durationSeconds": analysis["durationSeconds"],
+            "segmentStart": analysis["segmentStart"],
+            "syncScore": analysis["syncScore"],
         })
+        print(f"  {analysis['durationSeconds']} s · {analysis['tempo']} BPM · sincronía {analysis['syncScore']}")
 
-    Image.open(imagePath).resize((960, 540)).save(demoDir / "ritmo-de-luz-demo-poster.jpg", quality=90)
-    manifest = {
-        "name": "Ritmo de Luz",
-        "bands": 12,
-        "mlEnabled": True,
-        "fps": 30,
-        "durationSeconds": 20,
-        "videoUrl": demos[0]["videoUrl"],
-        "demos": demos,
-        "images": images,
-    }
+    manifest = {"name": "Ritmo de Luz", "bands": 12, "fps": 30, "credits": CREDITS, "demos": demos}
     (demoDir / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
-    print(json.dumps(manifest, indent=2, ensure_ascii=False))
     return 0
 
 

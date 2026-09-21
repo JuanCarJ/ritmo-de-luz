@@ -1,36 +1,42 @@
-"""Agrupación de estados visuales con fallback determinista."""
+"""Estados acústicos con K-Means y su color en la paleta de la imagen."""
 from __future__ import annotations
+
+import numpy as np
+from sklearn.cluster import KMeans
 
 from .models import AudioFeatures, Palette, VisualState
 
-
-def clusterStates(audio: AudioFeatures, palette: Palette, *, count: int = 4, seed: int = 7,
-                  useMl: bool = True) -> tuple[VisualState, ...]:
-    count = max(1, count)
-    labels = assignStateLabels(audio, count=count, seed=seed, useMl=useMl)
-    if not labels: return ()
-    points = [[audio.rms[i], audio.spectral_centroid[i], audio.onset[i]] for i in range(len(labels))]
-    result = []
-    for state_id in range(max(labels) + 1):
-        members = [i for i, label in enumerate(labels) if label == state_id]
-        avg = [sum(points[i][j] for i in members) / len(members) for j in range(3)]
-        color = palette.colors[state_id % len(palette.colors)] if palette.colors else (255, 255, 255)
-        result.append(VisualState(f"state_{state_id}", max(0.0, min(1.0, avg[0])), color,
-                                  {"centroid": avg[1], "onset": avg[2]}))
-    return tuple(result)
+STATE_NAMES = ("Reposo", "Fluido", "Intenso", "Clímax")
 
 
-def assignStateLabels(audio: AudioFeatures, *, count: int = 4, seed: int = 7,
-                      useMl: bool = True) -> tuple[int, ...]:
-    count = max(1, count)
-    n = len(audio.rms)
-    if not n: return ()
-    points = [[audio.rms[i], audio.spectral_centroid[i], audio.onset[i]] for i in range(n)]
-    try:
-        if not useMl:
-            raise ImportError
-        from sklearn.cluster import KMeans
-        labels = KMeans(n_clusters=min(count, n), random_state=seed, n_init=10).fit_predict(points)
-    except (ImportError, ValueError):
-        labels = [min(count - 1, int(p[0] * count)) for p in points]
-    return tuple(int(label) for label in labels)
+def clusterStates(audio: AudioFeatures, palette: Palette, *, count: int = 4,
+                  seed: int = 7) -> tuple[tuple[VisualState, ...], np.ndarray]:
+    """Agrupa las ventanas por energía, brillo y ataques.
+
+    Los grupos se ordenan por energía y reciben colores de la paleta ordenados por
+    viveza: el estado más tranquilo toma el color más apagado y el más intenso el
+    más vivo. Devuelve los estados y la etiqueta (0 = más tranquilo) de cada ventana.
+    """
+    points = np.column_stack([audio.rms, audio.centroid, audio.onset])
+    if not len(points):
+        return (), np.zeros(0, dtype=int)
+    k = max(1, min(count, len(np.unique(points.round(4), axis=0))))
+    model = KMeans(n_clusters=k, random_state=seed, n_init=10).fit(points)
+    centers = model.cluster_centers_
+    order = np.argsort(centers[:, 0] + 0.5 * centers[:, 2])
+    rank = np.empty(k, dtype=int)
+    rank[order] = np.arange(k)
+    labels = rank[model.labels_]
+
+    colors = palette.byVividness() or ((255, 255, 255),)
+    names = STATE_NAMES if k == len(STATE_NAMES) else tuple(f"Estado {i + 1}" for i in range(k))
+    states = []
+    for stateId in range(k):
+        center = centers[order[stateId]]
+        colorIndex = round(stateId * (len(colors) - 1) / max(1, k - 1))
+        states.append(VisualState(
+            id=stateId, name=names[stateId], color=tuple(int(c) for c in colors[colorIndex]),
+            energy=float(center[0]), brightness=float(center[1]), attacks=float(center[2]),
+            share=float(np.mean(labels == stateId)),
+        ))
+    return tuple(states), labels

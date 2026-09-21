@@ -3,96 +3,264 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Ritmo de Luz: audio convertido en una composición visual." />
+    <meta name="description" content="Ecualizador visual: una imagen dividida en 12 mosaicos que reaccionan a 12 bandas mel del audio." />
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
     <title>Ritmo de Luz</title>
-    <link rel="stylesheet" href="/static/tailwind.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
-  <body class="bg-slate-100 text-ink">
-    <header class="topbar flex items-center justify-between border-slate-200"><a class="brand text-xl tracking-tight" href="/">Ritmo de Luz</a></header>
-    <main class="page">
-      <section class="intro" aria-labelledby="page-title">
-        <p class="eyebrow">Ritmo de Luz</p>
-        <h1 id="page-title">Convierte el sonido en luz.</h1>
-        <p>Selecciona un audio y una imagen. Escúchalos, recorre el análisis y genera el resultado.</p>
+  <body>
+    <header class="bar">
+      <a class="brand" href="/" aria-label="Ritmo de Luz, inicio">
+        <svg viewBox="0 0 16 12" aria-hidden="true"><g fill="currentColor"><rect x="0" y="8" width="3" height="4" rx=".6"/><rect x="4.3" y="4" width="3" height="8" rx=".6"/><rect x="8.6" y="6" width="3" height="6" rx=".6"/><rect x="12.9" y="0" width="3" height="12" rx=".6"/></g></svg>
+        Ritmo de Luz
+      </a>
+      <p class="course">Midterm · Proyecto 2: Image–Audio Synchronizer<span> · Python for Research, UCO · Juan David Cárdenas</span></p>
+    </header>
+
+    <main class="deck">
+      <section class="stage" aria-label="Resultado">
+        <div class="screen">
+          <video id="video" autoplay muted loop playsinline preload="auto" aria-label="Video generado: la imagen reacciona al audio"></video>
+          <button id="sound" class="sound" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            Escuchar con sonido
+          </button>
+          <div id="busy" class="busy" hidden aria-live="polite">
+            <p id="busy-phase">Preparando…</p>
+            <div class="meter"><span id="busy-bar"></span></div>
+            <small>Tarda entre 15 y 40 s.</small>
+          </div>
+        </div>
+
+        <div class="transport">
+          <button id="toggle" class="icon-button" type="button" aria-label="Pausar">
+            <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"/></svg>
+            <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg>
+          </button>
+          <output id="clock" class="mono">0:00.0 / 0:20.0</output>
+          <div class="scrub" id="scrub" aria-hidden="true"><span id="scrub-fill"></span></div>
+          <output id="tempo" class="mono">— BPM</output>
+        </div>
+        <p id="source-line" class="source-line">Cargando…</p>
+
+        <nav class="picker" aria-label="Elegir ejemplo">
+          <div id="demos" class="demos"></div>
+          <button id="open-upload" class="upload-card" type="button">
+            <span class="plus" aria-hidden="true">+</span>
+            <strong>Usar mis archivos</strong>
+            <small>Una imagen y un audio</small>
+          </button>
+        </nav>
       </section>
 
-      <section class="panel workspace-panel rounded-2xl bg-white shadow-panel" aria-labelledby="demo-title">
-        <div class="section-heading section-heading-main"><div><p class="step">01 / ENTRADAS</p><h2 id="demo-title">Prepara una sesión</h2><p>Escucha el audio, elige una imagen y lanza el análisis real.</p></div><span class="live-badge"><i></i> Motor listo</span></div>
-        <div class="input-layout">
-          <div class="input-source input-source-audio">
-            <div class="field-heading"><span class="field-index">A</span><div><label for="demo-selector">Audio de prueba</label><small>WAV · escucha antes de analizar</small></div></div>
-            <select id="demo-selector" aria-label="Seleccionar audio demo"></select>
-            <audio id="demo-audio" controls preload="metadata" aria-label="Escuchar audio seleccionado"></audio>
-            <p id="demo-meta" class="source-meta">Cargando audio...</p>
-          </div>
-          <div class="input-source input-source-image">
-            <div class="field-heading"><span class="field-index">B</span><div><label>Imagen de partida</label><small>Su paleta colorea el resultado</small></div></div>
-            <div id="demo-image-grid" class="image-grid" aria-label="Imágenes precargadas"></div>
-          </div>
-        </div>
-        <div class="input-actions"><button id="open-file-modal" class="button button-secondary shadow-sm transition hover:-translate-y-0.5" type="button">Cargar mis archivos</button><button id="analysis-step" class="button button-secondary shadow-sm transition hover:-translate-y-0.5" type="button">Ver análisis en vivo</button><button id="demo-render" class="button shadow-sm transition hover:-translate-y-0.5" type="button">Generar composición</button></div>
-        <p id="input-selection-status" class="hint">Demo seleccionada · puedes escucharla antes de ejecutar.</p>
-        <dialog id="file-modal" class="file-modal rounded-2xl shadow-2xl">
-          <form method="dialog" id="file-form">
-            <div class="section-heading"><p class="step">Archivos propios</p><h2>Carga tu audio y tu imagen</h2><p>Se procesan en tu render y sustituyen la demo seleccionada.</p></div>
-            <label>Imagen <input id="custom-image" type="file" accept="image/png,image/jpeg" required /><small>PNG o JPG · una imagen</small></label>
-            <label>Audio <input id="custom-audio" type="file" accept="audio/wav,audio/x-wav,audio/wave" required /><small>WAV · entre 20 y 40 segundos</small></label>
-            <div class="modal-actions"><button id="close-file-modal" class="button button-secondary" type="button">Cancelar</button><button id="apply-files" class="button" type="button">Usar estos archivos</button></div>
-          </form>
-        </dialog>
-        <div id="render-process" class="render-process" hidden aria-live="polite">
-          <div class="process-head"><p class="process-title">Construcción en tiempo real</p><span class="process-live"><i></i> Sigue el cursor en cada gráfica</span></div>
-          <ol>
-            <li data-step="1"><span>1</span><div><strong>Entrada</strong><small>La imagen aporta los píxeles; el WAV aporta la señal que cambia en el tiempo.</small></div></li>
-            <li data-step="2"><span>2</span><div><strong>Análisis base</strong><small>STFT divide el audio en ventanas para observar frecuencia y tiempo; 12 bandas mel resumen graves, medios y agudos; RMS mide energía, centroide mide brillo y onset detecta ataques.</small></div></li>
-            <li data-step="3"><span>3</span><div><strong>Normalización y suavizado</strong><small>Lleva todas las medidas a 0–1, aplica una media móvil y después interpola entre ventanas para evitar saltos.</small></div></li>
-            <li data-step="4"><span>4</span><div><strong>Mapeo visual</strong><small>Repite cada banda en dos de los 24 mosaicos y convierte su energía en brillo, escala, transparencia y color.</small></div></li>
-            <li data-step="5"><span>5</span><div><strong>Salida</strong><small>Compone los frames a 30 FPS, mezcla el audio cuando FFmpeg está disponible y entrega un MP4.</small></div></li>
-          </ol>
-          <p id="render-phase" class="hint">En cola</p>
-        </div>
-        <p id="render-feedback" class="feedback" role="status"></p>
-        <div class="technical-note">
-          <strong>K-Means · agrupación del resultado</strong>
-          <p>Se aplica al resultado: agrupa cada ventana por energía, brillo espectral y ataques. Esos cuatro estados deciden el color que toma cada mosaico.</p>
-        </div>
-        <div id="analysis-controls" class="analysis-controls" hidden>
-          <button id="analysis-play" class="button" type="button">Reproducir proceso</button>
-          <label for="analysis-time">Ventana de análisis <input id="analysis-time" type="range" min="0" max="0" value="0" step="1" /></label>
-          <output id="analysis-readout">0.00 s · ventana 1</output>
-        </div>
-        <div class="visual-pipeline" aria-label="Proceso visual del audio hasta el video final">
-          <article class="visual-stage" data-visual-stage="1">
-            <header><span>01</span><strong>Entrada</strong><small>Imagen + WAV</small></header>
-            <div class="stage-body input-visual"><img id="pipeline-image" src="/artifacts/demo/images/aurora.png" alt="Imagen seleccionada" /><div class="signal-block"><span>Señal de audio · amplitud en el tiempo</span><div class="waveform-chart"><canvas id="pipeline-waveform" width="720" height="150" role="img" aria-label="Forma de onda real del audio"></canvas><span id="waveform-cursor" aria-hidden="true"></span></div><div class="chart-axis-notes"><span>Y: amplitud (−1 a 1)</span><span>X: tiempo (s)</span></div><output id="input-readout" class="metric-readout">Esperando archivo de audio e imagen</output><div id="image-palette" class="image-palette" aria-label="Colores extraídos de la imagen"></div><p class="image-palette-note">Paleta extraída de los píxeles: cada muestra es RGB (0–255) y sus colores alimentan los estados visuales.</p></div></div>
-          </article>
-          <article class="visual-stage" data-visual-stage="2">
-            <header><span>02</span><strong>Frecuencias</strong><small>STFT + 12 bandas mel</small></header>
-            <div class="stage-body frequency-visual"><div class="spectrogram-wrap"><canvas id="pipeline-spectrogram" width="720" height="220" role="img" aria-label="Espectrograma STFT de 12 bandas mel"></canvas><span id="frequency-cursor" aria-hidden="true"></span></div><div class="chart-axis-notes"><span>Y: banda mel (índice 1–12)</span><span>X: tiempo (s)</span></div><p class="chart-hint">El tramo iluminado corresponde a las ventanas ya recorridas; el tramo atenuado aún no se ha leído.</p><div class="signal-block"><span>Energía por banda · ventana actual · escala 0–1</span><div id="pipeline-bands" class="frequency-bars" aria-label="12 bandas mel"></div><output id="mel-readout" class="metric-readout">Pico de energía: —</output></div></div>
-          </article>
-          <article class="visual-stage" data-visual-stage="3">
-            <header><span>03</span><strong>Normalización</strong><small>RMS bruto → escala 0–1</small></header>
-            <div class="stage-body normalization-visual"><div class="normalization-chart"><canvas id="pipeline-normalization" width="720" height="190" role="img" aria-label="Comparación entre RMS bruto y RMS normalizado"></canvas><span id="normalization-cursor" aria-hidden="true"></span></div><div class="chart-axis-notes"><span>Y: RMS (0–1 tras reescalar)</span><span>X: tiempo (s)</span></div><div class="chart-legend"><span><i class="legend-raw"></i>RMS bruto reescalado</span><span><i class="legend-normalized"></i>RMS 0–1 suavizado</span></div><output id="rms-readout" class="metric-readout">RMS bruto 0.0000 · normalizado 0.0000</output></div>
-          </article>
-          <article class="visual-stage" data-visual-stage="4">
-            <header><span>04</span><strong>Mapeo 4 × 6</strong><small>12 bandas → 24 mosaicos</small></header>
-            <div class="stage-body mapping-visual"><div id="pipeline-grid" class="pipeline-grid" aria-label="24 mosaicos de imagen"></div><p>La energía modifica brillo, escala y color en cada región.</p></div>
-          </article>
-          <article class="visual-stage" data-visual-stage="5">
-            <header><span>05</span><strong>Resultado</strong><small>MP4 · 30 FPS · audio sincronizado</small></header>
-            <div class="stage-body output-stage"><video id="demo-video" controls preload="metadata" poster="/artifacts/demo/ritmo-de-luz-demo-poster.jpg"><source src="/artifacts/demo/ritmo-de-luz-menu-loop.mp4" type="video/mp4" />Tu navegador no puede reproducir este video.</video><div class="output-visual"><span id="output-state">Esperando render</span><b>30 FPS</b></div></div>
-          </article>
-          <article class="visual-stage" data-visual-stage="6">
-            <header><span>06</span><strong>K-Means</strong><small>Estados acústicos del resultado</small></header>
-            <div class="stage-body cluster-stage"><div class="cluster-intro"><p>K-Means agrupa las ventanas de audio que se parecen entre sí. Compara energía, brillo espectral y ataques; no etiqueta instrumentos, encuentra perfiles de comportamiento.</p></div><div id="kmeans-visual" class="cluster-visual" aria-label="Estados agrupados por K-Means"></div><div id="kmeans-legend" class="cluster-legend" aria-label="Significado de cada estado acústico"></div><p id="kmeans-state">Sin agrupar</p></div>
-          </article>
-        </div>
-      </section>
+      <aside class="console" aria-label="Lectura en vivo">
+        <section class="block">
+          <h2>12 bandas mel</h2>
+          <div id="bars" class="bars" role="img" aria-label="Energía actual de cada banda"></div>
+          <div class="axis mono"><span data-fill="bandLo">30 Hz</span><span>graves → agudos</span><span data-fill="bandHi">16 kHz</span></div>
+        </section>
 
+        <section class="block">
+          <h2>Mosaicos</h2>
+          <div id="map" class="map" role="img" aria-label="Rejilla 3 por 4: banda 1 abajo a la izquierda, banda 12 arriba a la derecha"></div>
+          <p class="note">El número es la banda que controla ese mosaico.</p>
+        </section>
+
+        <section class="block row">
+          <h2>Golpe</h2>
+          <span id="flash-dot" class="dot"></span>
+        </section>
+
+        <section class="block">
+          <h2>Estado K-Means</h2>
+          <p class="state-name" data-fill="stateName">—</p>
+          <p class="note" data-fill="stateDesc">—</p>
+          <div class="plot timeline"><canvas id="c-live-states" height="18"></canvas><i class="head"></i></div>
+        </section>
+      </aside>
     </main>
-    <footer class="footer">Ritmo de Luz · laboratorio audiovisual</footer>
+
+    <section class="steps" aria-labelledby="steps-title">
+      <div class="steps-head">
+        <h2 id="steps-title">Paso a paso</h2>
+        <button id="tour" class="tour" type="button">Recorrer los pasos</button>
+      </div>
+      <div class="flow" role="img" aria-label="Recorrido de los datos: la imagen y el audio pasan por 7 fases y se unen en la composición del video">
+        <svg viewBox="0 0 1060 292" xmlns="http://www.w3.org/2000/svg">
+          <defs><marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" class="farrow"/></marker></defs>
+          <text class="fin" x="0" y="49">Foto</text><text class="fin" x="0" y="189">Audio</text>
+          <path class="fedge" d="M 44 45 H 78" marker-end="url(#arrow)"/>
+          <path class="fedge" d="M 44 185 H 78" marker-end="url(#arrow)"/>
+          <path class="fedge" d="M 250 45 H 288" marker-end="url(#arrow)"/>
+          <path class="fedge" d="M 460 45 H 575 V 90" marker-end="url(#arrow)"/>
+          <path class="fedge" d="M 250 185 H 288" marker-end="url(#arrow)"/>
+          <path class="fedge" d="M 270 185 V 115 H 488" marker-end="url(#arrow)"/>
+          <path class="fedge" d="M 270 185 V 255 H 488" marker-end="url(#arrow)"/>
+          <path class="fedge" d="M 460 185 H 488" marker-end="url(#arrow)"/>
+          <path class="fedge" d="M 660 185 H 688" marker-end="url(#arrow)"/>
+          <path class="fedge" d="M 165 22 V 8 H 975 V 90" marker-end="url(#arrow)"/>
+          <path class="fedge" d="M 660 115 H 898" marker-end="url(#arrow)"/>
+          <path class="fedge" d="M 860 185 H 898" marker-end="url(#arrow)"/>
+          <path class="fedge" d="M 660 255 H 898" marker-end="url(#arrow)"/>
+          <circle class="fjoin" cx="270" cy="185" r="3.5"/>
+          <a href="#s1" class="fnode"><rect x="80" y="22" width="170" height="46" rx="10"/><circle cx="101" cy="45.0" r="11"/><text class="fnum" x="101" y="49.0">1</text><text class="fphase" x="120" y="41">LECTURA</text><text class="fout" x="120" y="58">Recorte 16:9</text></a>
+          <a href="#s2" class="fnode"><rect x="290" y="22" width="170" height="46" rx="10"/><circle cx="311" cy="45.0" r="11"/><text class="fnum" x="311" y="49.0">2</text><text class="fphase" x="330" y="41">EXTRACCIÓN DE COLOR</text><text class="fout" x="330" y="58">5 colores</text></a>
+          <a href="#s7" class="fnode"><rect x="490" y="92" width="170" height="46" rx="10"/><circle cx="511" cy="115.0" r="11"/><text class="fnum" x="511" y="119.0">7</text><text class="fphase" x="530" y="111">AGRUPACIÓN</text><text class="fout" x="530" y="128">4 estados</text></a>
+          <a href="#s1" class="fnode"><rect x="80" y="162" width="170" height="46" rx="10"/><circle cx="101" cy="185.0" r="11"/><text class="fnum" x="101" y="189.0">1</text><text class="fphase" x="120" y="181">LECTURA</text><text class="fout" x="120" y="198">Tramo de 20 s</text></a>
+          <a href="#s3" class="fnode"><rect x="290" y="162" width="170" height="46" rx="10"/><circle cx="311" cy="185.0" r="11"/><text class="fnum" x="311" y="189.0">3</text><text class="fphase" x="330" y="181">TRANSFORMACIÓN</text><text class="fout" x="330" y="198">12 bandas en dB</text></a>
+          <a href="#s4" class="fnode"><rect x="490" y="162" width="170" height="46" rx="10"/><circle cx="511" cy="185.0" r="11"/><text class="fnum" x="511" y="189.0">4</text><text class="fphase" x="530" y="181">ESTANDARIZACIÓN</text><text class="fout" x="530" y="198">Escala 0–1</text></a>
+          <a href="#s5" class="fnode"><rect x="690" y="162" width="170" height="46" rx="10"/><circle cx="711" cy="185.0" r="11"/><text class="fnum" x="711" y="189.0">5</text><text class="fphase" x="730" y="181">SUAVIZADO</text><text class="fout" x="730" y="198">Sin parpadeo</text></a>
+          <a href="#s6" class="fnode"><rect x="490" y="232" width="170" height="46" rx="10"/><circle cx="511" cy="255.0" r="11"/><text class="fnum" x="511" y="259.0">6</text><text class="fphase" x="530" y="251">DETECCIÓN</text><text class="fout" x="530" y="268">Golpes</text></a>
+          <a href="#s8" class="fnode fout-node"><rect x="900" y="90" width="150" height="186" rx="12"/><circle cx="975" cy="150" r="15"/><text class="fnum big" x="975" y="155">8</text><text class="fphase" x="975" y="192" text-anchor="middle">COMPOSICIÓN</text><text class="fout" x="975" y="212" text-anchor="middle">Video</text><text class="fsub" x="975" y="230" text-anchor="middle">1280×720 · 30 FPS</text></a>
+        </svg>
+      </div>
+
+      <nav class="step-nav" aria-label="Pasos">
+        <a href="#s1"><b>1</b>Lectura</a>
+        <a href="#s2"><b>2</b>Extracción de color</a>
+        <a href="#s3"><b>3</b>Transformación</a>
+        <a href="#s4"><b>4</b>Estandarización</a>
+        <a href="#s5"><b>5</b>Suavizado</a>
+        <a href="#s6"><b>6</b>Detección</a>
+        <a href="#s7"><b>7</b>Agrupación</a>
+        <a href="#s8"><b>8</b>Composición</a>
+      </nav>
+
+      <article class="step" id="s1">
+        <header><b>1</b><div><small>Lectura</small><h3>Foto y audio de entrada</h3></div></header>
+        <div class="viz two">
+          <figure>
+            <div class="crop"><img id="s1-img" alt="Foto original" /><i id="s1-box"></i></div>
+            <figcaption data-fill="imageCaption">—</figcaption>
+          </figure>
+          <figure>
+            <div class="plot"><canvas id="c-input" height="140"></canvas></div>
+            <figcaption data-fill="audioCaption">—</figcaption>
+          </figure>
+        </div>
+      </article>
+
+      <article class="step" id="s2">
+        <header><b>2</b><div><small>Extracción de color</small><h3>Paleta de la imagen con K-Means</h3></div></header>
+        <div class="viz">
+          <figure>
+            <div id="palette" class="palette"></div>
+            <figcaption>Ancho = porcentaje de píxeles de cada color.</figcaption>
+          </figure>
+          <figure>
+            <div id="vivid" class="vivid"></div>
+            <figcaption>Mismos colores, de apagado a vivo.</figcaption>
+          </figure>
+        </div>
+      </article>
+
+      <article class="step" id="s3">
+        <header><b>3</b><div><small>Transformación</small><h3>Del sonido a 12 bandas de frecuencia</h3></div></header>
+        <div class="viz">
+          <figure>
+            <div class="spec">
+              <div class="spec-y mono"><span data-fill="bandHi">16 kHz</span><span data-fill="bandMid">1 kHz</span><span data-fill="bandLo">30 Hz</span></div>
+              <div class="plot"><canvas id="c-spec" height="200"></canvas><i class="head"></i></div>
+            </div>
+            <figcaption>Más claro = más energía. Abajo, graves; arriba, agudos.</figcaption>
+          </figure>
+        </div>
+      </article>
+
+      <article class="step" id="s4">
+        <header><b>4</b><div><small>Estandarización</small><h3>Cada banda en escala 0–1</h3></div></header>
+        <div class="viz">
+          <label class="band-pick">Banda <select data-band aria-label="Banda"></select> <span class="mono" data-fill="bandRange"></span></label>
+          <figure>
+            <div class="plot"><canvas id="c-db" height="110"></canvas><i class="head"></i></div>
+            <figcaption><b class="k k-raw"></b>dB · <b class="k k-line"></b>percentiles 5 y 95</figcaption>
+          </figure>
+          <figure>
+            <div class="plot"><canvas id="c-norm" height="110"></canvas><i class="head"></i></div>
+            <figcaption><b class="k k-amber"></b>0–1</figcaption>
+          </figure>
+        </div>
+      </article>
+
+      <article class="step" id="s5">
+        <header><b>5</b><div><small>Suavizado</small><h3>Movimiento sin parpadeo</h3></div></header>
+        <div class="viz">
+          <label class="band-pick">Banda <select data-band aria-label="Banda"></select></label>
+          <figure>
+            <div class="plot"><canvas id="c-smooth" height="160"></canvas><i class="head"></i></div>
+            <figcaption><b class="k k-raw"></b>antes · <b class="k k-amber"></b>después</figcaption>
+          </figure>
+        </div>
+      </article>
+
+      <article class="step" id="s6">
+        <header><b>6</b><div><small>Detección</small><h3>Golpes del audio</h3></div></header>
+        <div class="viz">
+          <figure>
+            <div class="plot"><canvas id="c-onset" height="160"></canvas><i class="head"></i></div>
+            <figcaption><b class="k k-amber"></b>fuerza del golpe · <b class="k k-teal"></b>destello · marcas: golpes detectados</figcaption>
+          </figure>
+        </div>
+      </article>
+
+      <article class="step" id="s7">
+        <header><b>7</b><div><small>Agrupación</small><h3>Estados del audio con K-Means</h3></div></header>
+        <div class="viz">
+          <figure>
+            <div class="plot"><canvas id="c-states" height="36"></canvas><i class="head"></i></div>
+            <figcaption>Estado en cada instante del tramo.</figcaption>
+          </figure>
+          <div id="states" class="states"></div>
+        </div>
+      </article>
+
+      <article class="step" id="s8">
+        <header><b>8</b><div><small>Composición</small><h3>Del análisis al video</h3></div></header>
+        <div class="viz two">
+          <figure>
+            <div class="annotated"><img id="s8-img" alt="Cuadro del video" /><div id="s8-grid" class="grid-overlay"></div></div>
+            <ul class="rules">
+              <li><b>Banda</b> → brillo y zoom de su mosaico</li>
+              <li><b>Graves</b> abajo, <b>agudos</b> arriba</li>
+              <li><b>Golpe</b> → destello en todo el cuadro</li>
+              <li><b>Estado</b> → color de las juntas</li>
+            </ul>
+          </figure>
+          <figure>
+            <div class="plot"><canvas id="c-sync" height="160"></canvas><i class="head"></i></div>
+            <figcaption><b class="k k-amber"></b>golpes del audio · <b class="k k-teal"></b>brillo del video · correlación <output class="mono" data-fill="sync">—</output></figcaption>
+          </figure>
+        </div>
+      </article>
+    </section>
+
+    <footer class="credits" data-fill="credits"></footer>
+
+    <dialog id="upload" class="upload">
+      <form id="upload-form" method="dialog">
+        <h2>Usar mis archivos</h2>
+        <p>Se usan los 20 s con más energía del audio.</p>
+        <label class="drop">
+          <span>Imagen</span>
+          <input id="up-image" type="file" accept="image/png,image/jpeg" required />
+          <small>PNG o JPG</small>
+        </label>
+        <label class="drop">
+          <span>Audio</span>
+          <input id="up-audio" type="file" accept="audio/wav,audio/x-wav,audio/wave,audio/flac,audio/ogg,audio/mpeg,.wav,.flac,.ogg,.mp3" required />
+          <small>WAV, FLAC, OGG o MP3 · mínimo 10 s</small>
+        </label>
+        <p id="upload-error" class="error" role="alert"></p>
+        <div class="actions">
+          <button id="upload-cancel" class="ghost" type="button">Cancelar</button>
+          <button id="upload-go" class="primary" type="submit">Generar video</button>
+        </div>
+      </form>
+    </dialog>
+
     <script src="/static/app.js" defer></script>
   </body>
 </html>
