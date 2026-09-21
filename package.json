@@ -1,0 +1,10 @@
+{
+  "name": "ritmo-de-luz-web",
+  "private": true,
+  "scripts": {
+    "build:css": "tailwindcss -i ./apps/web/static/tailwind.input.css -o ./apps/web/static/tailwind.css --minify"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  }
+}

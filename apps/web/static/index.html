@@ -6,27 +6,35 @@
     <meta name="description" content="Ritmo de Luz: audio convertido en una composición visual." />
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
     <title>Ritmo de Luz</title>
+    <link rel="stylesheet" href="/static/tailwind.css" />
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
-  <body>
-    <header class="topbar"><a class="brand" href="/">Ritmo de Luz</a><span class="status-pill">demo local</span></header>
+  <body class="bg-slate-100 text-ink">
+    <header class="topbar flex items-center justify-between border-slate-200"><a class="brand text-xl tracking-tight" href="/">Ritmo de Luz</a></header>
     <main class="page">
       <section class="intro" aria-labelledby="page-title">
-        <p class="eyebrow">Midterm · sincronizador imagen–audio</p>
-        <h1 id="page-title">El sonido se convierte en luz.</h1>
-        <p>Reproduce una demo con análisis real o genera un video nuevo con tu imagen y tu audio.</p>
-        <p class="criteria-line">Evidencia: STFT · 12 bandas mel · RMS y onsets · normalización · mosaico 4 × 6 · 30 FPS · K-Means</p>
+        <p class="eyebrow">Ritmo de Luz</p>
+        <h1 id="page-title">Convierte el sonido en luz.</h1>
+        <p>Selecciona un audio y una imagen. Escúchalos, recorre el análisis y genera el resultado.</p>
       </section>
 
-      <section class="panel" aria-labelledby="demo-title">
-        <div class="section-heading"><p class="step">01</p><h2 id="demo-title">Reproduce o reconstruye la demo</h2><p>Cada opción tiene un audio público CC0 y un MP4 ya generado. Puedes reproducirlo tal cual o escoger una imagen de la galería para reconstruir el video.</p></div>
+      <section class="panel rounded-2xl bg-white shadow-panel" aria-labelledby="demo-title">
+        <div class="section-heading"><p class="step">01</p><h2 id="demo-title">Elige tus entradas</h2><p>Usa una demo preparada o carga tus propios archivos.</p></div>
         <label for="demo-selector">Audio de prueba</label>
         <select id="demo-selector" aria-label="Seleccionar audio demo"></select>
-        <label>Imagen para esta prueba</label>
+        <audio id="demo-audio" controls preload="metadata" aria-label="Escuchar audio seleccionado"></audio>
+        <label>Imagen</label>
         <div id="demo-image-grid" class="image-grid" aria-label="Imágenes precargadas"></div>
-        <label for="demo-image">O carga otra imagen</label>
-        <input id="demo-image" type="file" accept="image/png,image/jpeg" />
-        <button id="demo-render" class="button" type="button">Generar con esta imagen</button>
+        <div class="input-actions"><button id="open-file-modal" class="button button-secondary shadow-sm transition hover:-translate-y-0.5" type="button">Cargar audio e imagen</button><button id="analysis-step" class="button button-secondary shadow-sm transition hover:-translate-y-0.5" type="button">Ejecutar paso a paso</button><button id="demo-render" class="button shadow-sm transition hover:-translate-y-0.5" type="button">Ejecutar completo</button></div>
+        <p id="input-selection-status" class="hint">Demo seleccionada · puedes escucharla antes de ejecutar.</p>
+        <dialog id="file-modal" class="file-modal rounded-2xl shadow-2xl">
+          <form method="dialog" id="file-form">
+            <div class="section-heading"><p class="step">Archivos propios</p><h2>Carga tu audio y tu imagen</h2><p>Se procesan en tu render y sustituyen la demo seleccionada.</p></div>
+            <label>Imagen <input id="custom-image" type="file" accept="image/png,image/jpeg" required /><small>PNG o JPG · una imagen</small></label>
+            <label>Audio <input id="custom-audio" type="file" accept="audio/wav,audio/x-wav,audio/wave" required /><small>WAV · entre 20 y 40 segundos</small></label>
+            <div class="modal-actions"><button id="close-file-modal" class="button button-secondary" type="button">Cancelar</button><button id="apply-files" class="button" type="button">Usar estos archivos</button></div>
+          </form>
+        </dialog>
         <div id="render-process" class="render-process" hidden aria-live="polite">
           <p class="process-title">Construcción del resultado</p>
           <ol>
@@ -38,9 +46,10 @@
           </ol>
           <p id="render-phase" class="hint">En cola</p>
         </div>
+        <p id="render-feedback" class="feedback" role="status"></p>
         <div class="technical-note">
           <strong>K-Means · extensión opcional</strong>
-          <p>Agrupa las ventanas del audio en cuatro estados y asigna un color a cada uno.</p>
+          <p>Identifica cuatro perfiles acústicos combinando energía, brillo y ataques; cada perfil recibe un color de la imagen.</p>
         </div>
         <div id="analysis-controls" class="analysis-controls" hidden>
           <button id="analysis-play" class="button" type="button">Reproducir proceso</button>
@@ -74,16 +83,6 @@
           </article>
         </div>
         <p id="demo-meta" class="hint">Cargando demo...</p>
-      </section>
-
-      <section class="panel" aria-labelledby="render-title">
-        <div class="section-heading"><p class="step">02</p><h2 id="render-title">Elige imagen y audio</h2><p>Esta parte sí procesa tus archivos: selecciona ambos y genera un video nuevo. La imagen y el WAV son obligatorios.</p></div>
-        <form id="render-form" class="render-form">
-          <label>Imagen <input name="image" type="file" accept="image/png,image/jpeg" required /><small>PNG o JPG</small></label>
-          <label>Audio <input name="audio" type="file" accept="audio/wav,audio/x-wav" required /><small>WAV · máximo 40 s</small></label>
-          <button class="button" type="submit">Generar MP4</button>
-        </form>
-        <p id="render-feedback" class="feedback" role="status"></p>
       </section>
 
     </main>

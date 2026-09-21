@@ -29,6 +29,14 @@ python scripts/run_local.py
 Abrir <http://127.0.0.1:8000>. La página incluye la demo preparada y un recorrido
 para procesar archivos propios.
 
+La interfaz usa Tailwind CSS compilado dentro de `apps/web/static/tailwind.css`.
+Si se cambian clases de la interfaz, regenerarlo con:
+
+```bash
+npm install
+npm run build:css
+```
+
 ## Ejecutar el pipeline académico
 
 ```bash

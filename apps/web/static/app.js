@@ -1,14 +1,24 @@
 const feedback = document.querySelector('#render-feedback');
 const demoMeta = document.querySelector('#demo-meta');
 const demoSelector = document.querySelector('#demo-selector');
+const demoAudio = document.querySelector('#demo-audio');
 const demoVideo = document.querySelector('#demo-video');
-const demoImage = document.querySelector('#demo-image');
 const demoRender = document.querySelector('#demo-render');
+const analysisStep = document.querySelector('#analysis-step');
 const demoImageGrid = document.querySelector('#demo-image-grid');
+const inputSelectionStatus = document.querySelector('#input-selection-status');
+const fileModal = document.querySelector('#file-modal');
+const customImage = document.querySelector('#custom-image');
+const customAudio = document.querySelector('#custom-audio');
+const applyFiles = document.querySelector('#apply-files');
+const closeFileModal = document.querySelector('#close-file-modal');
+const openFileModal = document.querySelector('#open-file-modal');
 const renderProcess = document.querySelector('#render-process');
 const renderPhase = document.querySelector('#render-phase');
 let selectedDemo = null;
 let selectedImageUrl = null;
+let selectedImageFile = null;
+let selectedAudioFile = null;
 let activeAnalysis = null;
 let analysisAnimationId = null;
 let analysisAnimationStart = 0;
@@ -311,24 +321,28 @@ analysisPlay?.addEventListener('click', () => {
 
 function selectDemo(demo) {
   selectedDemo = demo;
+  selectedImageFile = null;
+  selectedAudioFile = null;
   demoVideo.src = demo.videoUrl;
   demoVideo.load();
+  demoAudio.src = demo.audioUrl;
+  demoAudio.load();
   updatePipelineVisual(0, true, demo.mlEnabled !== false);
   updateGridImage(selectedImageUrl);
   loadAnalysis(demo.analysisUrl);
   setMappingPreview(demo.mappingUrl);
-  demoMeta.textContent = `Video preparado · ${demo.description || 'Audio público'} · ${demo.durationSeconds || 20} s · ${demo.mlEnabled !== false ? 'ML activado' : 'modo determinista'}`;
+  inputSelectionStatus.textContent = `${demo.name} · audio listo para escuchar · imagen de la galería seleccionada`;
+  demoMeta.textContent = `${demo.description || 'Audio de prueba'} · ${demo.durationSeconds || 20} s · ${demo.mlEnabled !== false ? 'K-Means activado' : 'modo determinista'}`;
 }
 
-async function renderWithImage(imageFile, audioUrl) {
-  if ((!imageFile && !selectedImageUrl) || !audioUrl) {
-    demoMeta.textContent = 'Selecciona una imagen y un audio de prueba.';
+async function renderFiles(imageFile, audioSource, autoPlay = false) {
+  if ((!imageFile && !selectedImageUrl) || !audioSource) {
+    inputSelectionStatus.textContent = 'Selecciona una imagen y un audio antes de ejecutar.';
     return;
   }
   demoRender.disabled = true;
-  demoMeta.textContent = 'Generando video con la imagen seleccionada...';
-  const audioResponse = await fetch(audioUrl);
-  const audioBlob = await audioResponse.blob();
+  analysisStep.disabled = true;
+  demoMeta.textContent = 'Preparando el análisis de tus archivos...';
   const formData = new FormData();
   if (imageFile) {
     formData.append('image', imageFile);
@@ -337,18 +351,26 @@ async function renderWithImage(imageFile, audioUrl) {
     const imageBlob = await imageResponse.blob();
     formData.append('image', new File([imageBlob], 'demo-image.png', { type: 'image/png' }));
   }
-  formData.append('audio', new File([audioBlob], 'demo.wav', { type: 'audio/wav' }));
+  if (audioSource instanceof File) {
+    formData.append('audio', audioSource);
+  } else {
+    const audioResponse = await fetch(audioSource);
+    const audioBlob = await audioResponse.blob();
+    formData.append('audio', new File([audioBlob], 'demo.wav', { type: 'audio/wav' }));
+  }
   const response = await fetch('/api/render', { method: 'POST', body: formData });
   const payload = await response.json();
   if (!response.ok) {
     demoMeta.textContent = payload.detail || 'No se pudo generar el video.';
     demoRender.disabled = false;
+    analysisStep.disabled = false;
     return;
   }
   renderProcess.hidden = false;
   renderProcess.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  await pollJob(payload.id, true);
+  await pollJob(payload.id, true, autoPlay);
   demoRender.disabled = false;
+  analysisStep.disabled = false;
 }
 
 function updateProcess(job) {
@@ -375,22 +397,23 @@ async function loadDemo() {
     images.forEach((image) => {
       const button = document.createElement('button');
       button.type = 'button';
-      button.className = 'image-option';
+      button.className = 'image-option shadow-sm transition hover:-translate-y-0.5 hover:shadow-md';
       button.setAttribute('aria-pressed', 'false');
       button.innerHTML = `<img src="${image.imageUrl}" alt="${image.name}" /><span>${image.name}</span>`;
       button.addEventListener('click', () => {
         selectedImageUrl = image.imageUrl;
+        selectedImageFile = null;
         document.querySelector('#pipeline-image').src = image.imageUrl;
         updateGridImage(image.imageUrl);
         updatePipelineVisual(0, false);
-        demoMeta.textContent = `${image.name} seleccionada · pulsa “Generar con esta imagen”`;
+        inputSelectionStatus.textContent = `${image.name} seleccionada · audio listo para escuchar`;
+        demoMeta.textContent = `${image.name} seleccionada · elige una ejecución`;
         document.querySelectorAll('.image-option').forEach((item) => {
           item.classList.remove('selected');
           item.setAttribute('aria-pressed', 'false');
         });
         button.classList.add('selected');
         button.setAttribute('aria-pressed', 'true');
-        demoImage.value = '';
       });
       demoImageGrid.appendChild(button);
     });
@@ -411,7 +434,7 @@ async function loadDemo() {
   }
 }
 
-async function pollJob(jobId, updateDemo = false) {
+async function pollJob(jobId, updateDemo = false, autoPlay = false) {
   const response = await fetch(`/api/jobs/${jobId}`);
   const job = await response.json();
   updateProcess(job);
@@ -420,8 +443,9 @@ async function pollJob(jobId, updateDemo = false) {
     const link = `<a href="${job.outputUrl}" target="_blank" rel="noreferrer">Abrir MP4</a>`;
     demoVideo.src = job.outputUrl;
     demoVideo.load();
-    loadAnalysis(job.analysisUrl);
+    await loadAnalysis(job.analysisUrl);
     setMappingPreview(job.mappingUrl);
+    if (autoPlay) startAnalysisPlayback();
     if (updateDemo) {
       demoMeta.innerHTML = `Video generado con tu imagen · ${link}`;
     } else {
@@ -434,36 +458,47 @@ async function pollJob(jobId, updateDemo = false) {
     feedback.textContent = job.error || 'No se pudo generar la composición.';
     return;
   }
-  window.setTimeout(() => pollJob(jobId, updateDemo), 1000);
+  window.setTimeout(() => pollJob(jobId, updateDemo, autoPlay), 1000);
 }
 
-demoRender.addEventListener('click', () => renderWithImage(demoImage.files[0], selectedDemo?.audioUrl));
-demoImage.addEventListener('change', () => {
-  const file = demoImage.files[0];
+openFileModal.addEventListener('click', () => fileModal.showModal());
+closeFileModal.addEventListener('click', () => fileModal.close());
+customAudio.addEventListener('change', () => {
+  const file = customAudio.files[0];
   if (!file) return;
+  demoAudio.src = URL.createObjectURL(file);
+  demoAudio.load();
+});
+applyFiles.addEventListener('click', () => {
+  const imageFile = customImage.files[0];
+  const audioFile = customAudio.files[0];
+  if (!imageFile || !audioFile) return;
+  selectedImageFile = imageFile;
+  selectedAudioFile = audioFile;
   selectedImageUrl = null;
-  document.querySelector('#pipeline-image').src = URL.createObjectURL(file);
+  document.querySelector('#pipeline-image').src = URL.createObjectURL(imageFile);
   updateGridImage(document.querySelector('#pipeline-image').src);
-  updatePipelineVisual(0, false);
-  demoMeta.textContent = 'Imagen cargada · pulsa “Generar con esta imagen”';
   document.querySelectorAll('.image-option').forEach((item) => {
     item.classList.remove('selected');
     item.setAttribute('aria-pressed', 'false');
   });
+  inputSelectionStatus.textContent = `${imageFile.name} + ${audioFile.name} · archivos listos para ejecutar`;
+  demoMeta.textContent = 'Archivos propios seleccionados · escucha el audio y elige una ejecución.';
+  fileModal.close();
 });
-
-document.querySelector('#render-form').addEventListener('submit', async (event) => {
-  event.preventDefault();
-  feedback.textContent = 'Subiendo archivos...';
-  const response = await fetch('/api/render', { method: 'POST', body: new FormData(event.currentTarget) });
-  const payload = await response.json();
-  if (!response.ok) {
-    feedback.textContent = payload.detail || 'No se pudo iniciar el render.';
-    return;
+demoRender.addEventListener('click', () => {
+  if (selectedImageFile && selectedAudioFile) {
+    renderFiles(selectedImageFile, selectedAudioFile);
+  } else {
+    renderFiles(null, selectedDemo?.audioUrl);
   }
-  renderProcess.hidden = false;
-  renderProcess.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  pollJob(payload.id);
+});
+analysisStep.addEventListener('click', () => {
+  if (selectedImageFile && selectedAudioFile) {
+    renderFiles(selectedImageFile, selectedAudioFile, true);
+  } else {
+    startAnalysisPlayback();
+  }
 });
 
 loadDemo();
