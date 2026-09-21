@@ -42,6 +42,11 @@
           <strong>K-Means · extensión opcional</strong>
           <p>Agrupa ventanas de audio y colores en estados visuales. Está visible en la demo; los archivos propios siguen la ruta base.</p>
         </div>
+        <div id="analysis-controls" class="analysis-controls" hidden>
+          <button id="analysis-play" class="button" type="button">Reproducir proceso</button>
+          <label for="analysis-time">Ventana de análisis <input id="analysis-time" type="range" min="0" max="0" value="0" step="1" /></label>
+          <output id="analysis-readout">0.00 s · ventana 1</output>
+        </div>
         <div class="visual-pipeline" aria-label="Proceso visual del audio hasta el video final">
           <article class="visual-stage" data-visual-stage="1">
             <header><span>01</span><strong>Entrada</strong><small>Imagen + WAV</small></header>
@@ -49,11 +54,11 @@
           </article>
           <article class="visual-stage" data-visual-stage="2">
             <header><span>02</span><strong>Frecuencias</strong><small>STFT + 12 bandas mel</small></header>
-            <div class="stage-body frequency-visual"><canvas id="pipeline-spectrogram" width="720" height="220" role="img" aria-label="Espectrograma STFT de 12 bandas mel"></canvas><div class="signal-block"><span>Energía media por banda</span><div id="pipeline-bands" class="frequency-bars" aria-label="12 bandas mel"></div></div></div>
+            <div class="stage-body frequency-visual"><div class="spectrogram-wrap"><canvas id="pipeline-spectrogram" width="720" height="220" role="img" aria-label="Espectrograma STFT de 12 bandas mel"></canvas><span id="frequency-cursor" aria-hidden="true"></span></div><div class="signal-block"><span>Energía por banda · ventana actual</span><div id="pipeline-bands" class="frequency-bars" aria-label="12 bandas mel"></div></div></div>
           </article>
           <article class="visual-stage" data-visual-stage="3">
             <header><span>03</span><strong>Normalización</strong><small>RMS bruto → escala 0–1</small></header>
-            <div class="stage-body normalization-visual"><div class="metric-block"><span>Antes</span><div id="raw-bars" class="mini-bars"></div></div><div class="metric-block normalized"><span>Después + suavizado</span><div id="normalized-bars" class="mini-bars"></div></div></div>
+            <div class="stage-body normalization-visual"><div class="metric-block"><span>Antes · RMS bruto</span><div id="raw-bars" class="mini-bars"></div></div><div class="metric-block normalized"><span>Después · RMS 0–1 + suavizado</span><div id="normalized-bars" class="mini-bars"></div></div><output id="rms-readout" class="metric-readout">RMS bruto 0.000 · normalizado 0.000</output></div>
           </article>
           <article class="visual-stage" data-visual-stage="4">
             <header><span>04</span><strong>Mapeo 4 × 6</strong><small>12 bandas → 24 mosaicos</small></header>

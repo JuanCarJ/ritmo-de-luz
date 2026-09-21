@@ -9,6 +9,40 @@ const renderProcess = document.querySelector('#render-process');
 const renderPhase = document.querySelector('#render-phase');
 let selectedDemo = null;
 let selectedImageUrl = null;
+let activeAnalysis = null;
+
+const analysisControls = document.querySelector('#analysis-controls');
+const analysisPlay = document.querySelector('#analysis-play');
+const analysisTime = document.querySelector('#analysis-time');
+const analysisReadout = document.querySelector('#analysis-readout');
+
+function renderAnalysisFrame(index = 0) {
+  if (!activeAnalysis?.melBands?.length) return;
+  const frameIndex = Math.max(0, Math.min(activeAnalysis.melBands.length - 1, Number(index) || 0));
+  const frame = activeAnalysis.melBands[frameIndex] || [];
+  const rawRms = activeAnalysis.rawRms || [];
+  const rms = activeAnalysis.rms || [];
+  const progress = frameIndex / Math.max(1, activeAnalysis.melBands.length - 1);
+  document.querySelectorAll('#pipeline-bands span').forEach((bar, bandIndex) => {
+    bar.style.height = `${18 + Number(frame[bandIndex] || 0) * 80}%`;
+  });
+  const cursor = document.querySelector('#frequency-cursor');
+  if (cursor) cursor.style.left = `${progress * 100}%`;
+  if (analysisTime) analysisTime.value = String(frameIndex);
+  const time = Number(activeAnalysis.times?.[frameIndex] || 0);
+  if (analysisReadout) analysisReadout.textContent = `${time.toFixed(2)} s · ventana ${frameIndex + 1}/${activeAnalysis.melBands.length}`;
+  const rmsReadout = document.querySelector('#rms-readout');
+  if (rmsReadout) rmsReadout.textContent = `RMS bruto ${Number(rawRms[frameIndex] || 0).toFixed(3)} · normalizado ${Number(rms[frameIndex] || 0).toFixed(3)}`;
+}
+
+function syncAnalysisToVideo() {
+  if (!activeAnalysis || !Number.isFinite(demoVideo.currentTime)) return;
+  const times = activeAnalysis.times || [];
+  if (!times.length) return;
+  let frameIndex = 0;
+  while (frameIndex < times.length - 1 && times[frameIndex + 1] <= demoVideo.currentTime) frameIndex += 1;
+  renderAnalysisFrame(frameIndex);
+}
 
 function buildPipelineVisuals() {
   for (let index = 0; index < 20; index += 1) {
@@ -67,6 +101,12 @@ async function loadAnalysis(analysisUrl) {
   const response = await fetch(analysisUrl);
   if (!response.ok) return;
   const analysis = await response.json();
+  activeAnalysis = analysis;
+  if (analysisControls) analysisControls.hidden = false;
+  if (analysisTime) {
+    analysisTime.max = String(Math.max(0, (analysis.melBands || []).length - 1));
+    analysisTime.value = '0';
+  }
   const rms = analysis.rms || [];
   const waveform = analysis.waveform || [];
   const melBands = analysis.melBands || [];
@@ -92,11 +132,6 @@ async function loadAnalysis(analysisUrl) {
     const sourceIndex = Math.floor(index * waveform.length / bars.length);
     bar.style.height = `${18 + Math.abs(waveform[sourceIndex] || 0) * 80}%`;
   });
-  const bandValues = melBands.reduce((totals, frame) => frame.map((value, index) => totals[index] + value), new Array(12).fill(0));
-  document.querySelectorAll('#pipeline-bands span').forEach((bar, index) => {
-    const value = bandValues[index] / Math.max(1, melBands.length);
-    bar.style.height = `${18 + value * 80}%`;
-  });
   document.querySelectorAll('#raw-bars span').forEach((bar, index) => {
     const rawValues = analysis.rawRms || [];
     const sourceIndex = Math.floor(index * rawValues.length / Math.max(1, document.querySelectorAll('#raw-bars span').length));
@@ -108,6 +143,7 @@ async function loadAnalysis(analysisUrl) {
     const normalizedValue = rms[sourceIndex] || 0;
     bar.style.height = `${18 + normalizedValue * 80}%`;
   });
+  renderAnalysisFrame(0);
   const clusterVisual = document.querySelector('#kmeans-visual');
   clusterVisual.replaceChildren();
   (analysis.states || []).forEach((state) => {
@@ -125,6 +161,30 @@ function setMappingPreview(mappingUrl) {
   grid.style.backgroundImage = `url(${mappingUrl})`;
   grid.classList.add('has-preview');
 }
+
+demoVideo.addEventListener('timeupdate', syncAnalysisToVideo);
+demoVideo.addEventListener('play', () => {
+  if (analysisPlay) analysisPlay.textContent = 'Pausar proceso';
+});
+demoVideo.addEventListener('pause', () => {
+  if (analysisPlay) analysisPlay.textContent = 'Reproducir proceso';
+});
+demoVideo.addEventListener('ended', () => {
+  if (analysisPlay) analysisPlay.textContent = 'Reproducir proceso';
+});
+analysisTime?.addEventListener('input', () => {
+  const frameIndex = Number(analysisTime.value);
+  renderAnalysisFrame(frameIndex);
+  const time = Number(activeAnalysis?.times?.[frameIndex] || 0);
+  if (Number.isFinite(time)) demoVideo.currentTime = time;
+});
+analysisPlay?.addEventListener('click', () => {
+  if (demoVideo.paused) {
+    demoVideo.play().catch(() => {});
+  } else {
+    demoVideo.pause();
+  }
+});
 
 function selectDemo(demo) {
   selectedDemo = demo;
