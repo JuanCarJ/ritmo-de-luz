@@ -39,7 +39,7 @@ video { display:block; width:100%; margin-top:20px; background:#10151a; border-r
 .render-process li.done span { border-color:var(--accent); color:var(--accent); }
 .technical-note { margin-top:18px; padding:14px; border-left:3px solid var(--accent); background:#f1f7f5; font-size:.86rem; }
 .technical-note p { margin:4px 0 0; color:var(--muted); }
-.analysis-controls { display:grid; grid-template-columns:auto minmax(180px,1fr) auto; gap:14px; align-items:end; margin-top:20px; padding:14px; border:1px solid var(--line); border-radius:9px; background:#f8fafb; }
+.analysis-controls { position:sticky; top:10px; z-index:5; display:grid; grid-template-columns:auto minmax(180px,1fr) auto; gap:14px; align-items:end; margin-top:20px; padding:14px; border:1px solid var(--line); border-radius:9px; background:#f8fafb; box-shadow:0 6px 18px rgba(23,32,42,.08); }
 .analysis-controls .button { min-height:38px; }
 .analysis-controls label { margin:0; font-size:.78rem; }
 .analysis-controls input[type=range] { width:100%; accent-color:var(--accent); }
@@ -57,6 +57,9 @@ video { display:block; width:100%; margin-top:20px; background:#10151a; border-r
 .input-visual img { width:100%; aspect-ratio:16/9; object-fit:cover; border-radius:8px; }
 .signal-block { display:grid; gap:6px; }
 .signal-block > span,.metric-block > span { color:var(--muted); font-size:.78rem; font-weight:700; }
+.waveform-chart,.normalization-chart { position:relative; }
+.waveform-chart canvas,.normalization-chart canvas { display:block; width:100%; height:auto; min-height:120px; border-radius:8px; }
+.waveform-chart span,.normalization-chart span { position:absolute; z-index:2; top:0; bottom:0; left:0; width:2px; background:#fff; box-shadow:0 0 0 1px rgba(23,32,42,.55); pointer-events:none; transition:left .06s linear; }
 .wave-bars,.frequency-bars,.mini-bars { display:flex; align-items:end; gap:3px; height:64px; padding:6px 0 0; }
 .wave-bars span,.frequency-bars span,.mini-bars span { flex:1; min-width:2px; border-radius:2px 2px 0 0; background:var(--accent); }
 .frequency-bars span { background:#4b9c90; }
@@ -66,6 +69,11 @@ video { display:block; width:100%; margin-top:20px; background:#10151a; border-r
 #frequency-cursor { position:absolute; z-index:2; top:0; bottom:0; left:0; width:2px; background:#fff; box-shadow:0 0 0 1px rgba(23,32,42,.55); pointer-events:none; transition:left .06s linear; }
 .visual-stage canvas { display:block; width:100%; height:auto; min-height:180px; border-radius:8px; image-rendering:auto; }
 .normalization-visual { display:grid; gap:18px; }
+.chart-legend { display:flex; flex-wrap:wrap; gap:14px; color:var(--muted); font-size:.78rem; }
+.chart-legend span { display:inline-flex; align-items:center; gap:6px; }
+.chart-legend i { display:inline-block; width:18px; height:3px; border-radius:3px; }
+.legend-raw { background:#39a394; }
+.legend-normalized { background:#e39b3b; }
 .metric-block { display:grid; gap:5px; }
 .metric-block.normalized { padding-top:14px; border-top:1px solid var(--line); }
 .metric-block.normalized .mini-bars span { background:#e39b3b; }

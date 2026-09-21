@@ -16,6 +16,69 @@ const analysisPlay = document.querySelector('#analysis-play');
 const analysisTime = document.querySelector('#analysis-time');
 const analysisReadout = document.querySelector('#analysis-readout');
 
+function drawWaveform(values) {
+  const canvas = document.querySelector('#pipeline-waveform');
+  if (!canvas || !values?.length) return;
+  const context = canvas.getContext('2d');
+  const width = canvas.width;
+  const height = canvas.height;
+  const middle = height / 2;
+  const scale = Math.max(...values.map((value) => Math.abs(Number(value) || 0)), 1e-9);
+  context.clearRect(0, 0, width, height);
+  context.fillStyle = '#17202a';
+  context.fillRect(0, 0, width, height);
+  context.strokeStyle = '#52606d';
+  context.lineWidth = 1;
+  context.beginPath();
+  context.moveTo(0, middle);
+  context.lineTo(width, middle);
+  context.stroke();
+  context.strokeStyle = '#39a394';
+  context.lineWidth = 2;
+  context.beginPath();
+  values.forEach((value, index) => {
+    const x = index * width / Math.max(1, values.length - 1);
+    const y = middle - (Number(value) || 0) / scale * (middle - 12);
+    if (index === 0) context.moveTo(x, y); else context.lineTo(x, y);
+  });
+  context.stroke();
+}
+
+function drawNormalization(rawValues, normalizedValues) {
+  const canvas = document.querySelector('#pipeline-normalization');
+  if (!canvas || !rawValues?.length || !normalizedValues?.length) return;
+  const context = canvas.getContext('2d');
+  const width = canvas.width;
+  const height = canvas.height;
+  const padding = 16;
+  const rawMax = Math.max(...rawValues.map((value) => Number(value) || 0), 1e-9);
+  context.clearRect(0, 0, width, height);
+  context.fillStyle = '#17202a';
+  context.fillRect(0, 0, width, height);
+  context.strokeStyle = '#52606d';
+  context.lineWidth = 1;
+  [0, .5, 1].forEach((level) => {
+    const y = height - padding - level * (height - padding * 2);
+    context.beginPath();
+    context.moveTo(padding, y);
+    context.lineTo(width - padding, y);
+    context.stroke();
+  });
+  const drawLine = (values, color, scale = 1) => {
+    context.strokeStyle = color;
+    context.lineWidth = 2;
+    context.beginPath();
+    values.forEach((value, index) => {
+      const x = padding + index * (width - padding * 2) / Math.max(1, values.length - 1);
+      const y = height - padding - ((Number(value) || 0) / scale) * (height - padding * 2);
+      if (index === 0) context.moveTo(x, y); else context.lineTo(x, y);
+    });
+    context.stroke();
+  };
+  drawLine(rawValues, '#39a394', rawMax);
+  drawLine(normalizedValues, '#e39b3b');
+}
+
 function renderAnalysisFrame(index = 0) {
   if (!activeAnalysis?.melBands?.length) return;
   const frameIndex = Math.max(0, Math.min(activeAnalysis.melBands.length - 1, Number(index) || 0));
@@ -28,11 +91,15 @@ function renderAnalysisFrame(index = 0) {
   });
   const cursor = document.querySelector('#frequency-cursor');
   if (cursor) cursor.style.left = `${progress * 100}%`;
+  const waveformCursor = document.querySelector('#waveform-cursor');
+  if (waveformCursor) waveformCursor.style.left = `${progress * 100}%`;
+  const normalizationCursor = document.querySelector('#normalization-cursor');
+  if (normalizationCursor) normalizationCursor.style.left = `${progress * 100}%`;
   if (analysisTime) analysisTime.value = String(frameIndex);
   const time = Number(activeAnalysis.times?.[frameIndex] || 0);
   if (analysisReadout) analysisReadout.textContent = `${time.toFixed(2)} s · ventana ${frameIndex + 1}/${activeAnalysis.melBands.length}`;
   const rmsReadout = document.querySelector('#rms-readout');
-  if (rmsReadout) rmsReadout.textContent = `RMS bruto ${Number(rawRms[frameIndex] || 0).toFixed(3)} · normalizado ${Number(rms[frameIndex] || 0).toFixed(3)}`;
+  if (rmsReadout) rmsReadout.textContent = `RMS bruto ${Number(rawRms[frameIndex] || 0).toFixed(4)} · normalizado ${Number(rms[frameIndex] || 0).toFixed(4)}`;
 }
 
 function syncAnalysisToVideo() {
@@ -45,22 +112,10 @@ function syncAnalysisToVideo() {
 }
 
 function buildPipelineVisuals() {
-  for (let index = 0; index < 20; index += 1) {
-    const waveBar = document.createElement('span');
-    waveBar.style.height = '0%';
-    document.querySelector('#pipeline-wave').appendChild(waveBar);
-  }
   for (let index = 0; index < 12; index += 1) {
     const band = document.createElement('span');
     band.style.height = '0%';
     document.querySelector('#pipeline-bands').appendChild(band);
-  }
-  for (const containerId of ['raw-bars', 'normalized-bars']) {
-    for (let index = 0; index < 12; index += 1) {
-      const bar = document.createElement('span');
-      bar.style.height = '0%';
-      document.querySelector(`#${containerId}`).appendChild(bar);
-    }
   }
   for (let index = 0; index < 24; index += 1) {
     const tile = document.createElement('span');
@@ -143,6 +198,13 @@ async function loadAnalysis(analysisUrl) {
     const normalizedValue = rms[sourceIndex] || 0;
     bar.style.height = `${18 + normalizedValue * 80}%`;
   });
+  drawWaveform(waveform);
+  drawNormalization(analysis.rawRms || [], rms);
+  const inputReadout = document.querySelector('#input-readout');
+  const image = document.querySelector('#pipeline-image');
+  const duration = Number(analysis.times?.at(-1) || 0);
+  const paletteCount = analysis.palette?.colors?.length || 0;
+  if (inputReadout) inputReadout.textContent = `WAV · ${duration.toFixed(2)} s · ${melBands.length} ventanas · imagen ${image?.naturalWidth || '—'} × ${image?.naturalHeight || '—'} px · ${paletteCount} colores extraídos`;
   renderAnalysisFrame(0);
   const clusterVisual = document.querySelector('#kmeans-visual');
   clusterVisual.replaceChildren();
