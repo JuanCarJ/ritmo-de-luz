@@ -38,7 +38,7 @@ python3 -m venv .venv
 6. **Mapeo:** banda 1 (graves) abajo a la izquierda y banda 12 (agudos) arriba a la derecha.
    La energía controla el brillo (0,22×–1,25×) y el zoom (hasta +18 %) del mosaico.
 7. **K-Means:** agrupa los píxeles en 5 colores dominantes y los instantes del audio
-   (RMS, centroide, ataque) en 4 estados, de Reposo a Clímax. El estado más enérgico toma
+   (RMS, centroide, ataque) en 4 perfiles, de Calma a Fuerte. El perfil más enérgico toma
    el color más vivo de la foto y lo pinta en las juntas.
 8. **Salida:** MP4 1280×720, 30 FPS, H.264 + AAC; audio unido con el FFmpeg de `imageio-ffmpeg`.
 

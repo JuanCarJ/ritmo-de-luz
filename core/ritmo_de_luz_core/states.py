@@ -6,7 +6,7 @@ from sklearn.cluster import KMeans
 
 from .models import AudioFeatures, Palette, VisualState
 
-STATE_NAMES = ("Reposo", "Fluido", "Intenso", "Clímax")
+STATE_NAMES = ("Calma", "Movimiento", "Enérgico", "Fuerte")
 
 
 def clusterStates(audio: AudioFeatures, palette: Palette, *, count: int = 4,

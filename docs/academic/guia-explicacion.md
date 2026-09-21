@@ -100,9 +100,9 @@ Dos carriles que se juntan en el cuadro final:
 
 - **Entra:** para cada instante del tramo, energía (RMS), brillo espectral (centroide) y fuerza
   de golpe.
-- **Hace:** K-Means agrupa los instantes parecidos en 4 estados y los ordena de menos a más
-  intensos (energía + golpes): Reposo, Fluido, Intenso, Clímax.
-- **Sale:** un estado por instante. El más tranquilo toma el color más apagado de la paleta
+- **Hace:** K-Means agrupa las ventanas del tramo en 4 perfiles y los ordena de menor a mayor
+  intensidad (energía + golpes): Calma, Movimiento, Enérgico y Fuerte.
+- **Sale:** un perfil por instante. El más tranquilo toma el color más apagado de la paleta
   (paso 2) y el más intenso, el más vivo (pasa a 8).
 - **Qué aporta:** las bandas dicen **qué suena ahora**; K-Means dice **en qué parte de la
   canción estamos**, sin umbrales puestos a mano. Así el video cambia de carácter cuando cambia
